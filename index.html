@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>asgasg</title>
+  </head>
+  <body>
+    <img class="spandau" src="/spandau.jpg" style="display:none" />
+    <canvas id="canvas" width="1400" height="600"></canvas>
+    <script src="bitcrusher.js"></script>
+    <script>
+    function draw(buffer) {
+
+      // ImageData data is a Uint8ClampedArray so we need to make a typed array from our buffer
+      // @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
+      clampedDataArray = new Uint8ClampedArray(buffer.length);
+
+      var bufferData = buffer.getChannelData(0);
+
+      for (i = 0; i < clampedDataArray.length; i++) {
+        clampedDataArray[i] = bufferData[i];
+      }
+
+      newImage = new ImageData(clampedDataArray, canvas.width, canvas.height);
+      newImage.data = clampedDataArray;
+
+      ctx.putImageData(newImage, 0, 0);
+
+      ctx.stroke();
+    };
+
+    function playImage( imageData ) {
+      audioCtx = new AudioContext();
+      channels = 1;
+      var bufferSize = imageData.length / channels;
+      var arrayBuffer = audioCtx.createBuffer(channels, bufferSize, audioCtx.sampleRate);
+      var offlineAudioCtx = new OfflineAudioContext(channels, bufferSize, audioCtx.sampleRate);
+      var nowBuffering = arrayBuffer.getChannelData(0);
+      for (var i = 0; i < bufferSize; i++) {
+        nowBuffering[i] = imageData[i];
+      }
+
+
+      var bitcrushNode = bitcrusher(offlineAudioCtx, {
+          bitDepth: 1021,
+          channelCount: 1,
+          frequency: 10,
+          phasor: 0.4,
+      });
+
+      var bufferSource = offlineAudioCtx.createBufferSource();
+    	bufferSource.buffer = arrayBuffer;
+
+
+      biquadFilter = offlineAudioCtx.createBiquadFilter();
+      biquadFilter.type = "highshelf";
+      biquadFilter.frequency.value = 0.40;
+      biquadFilter.gain.value = 19;
+    	bufferSource.connect(biquadFilter);
+    	biquadFilter.connect(offlineAudioCtx.destination);
+
+
+      bufferSource.connect(bitcrushNode);
+      bitcrushNode.connect(offlineAudioCtx.destination);
+
+    	bufferSource.start();
+    	offlineAudioCtx.startRendering();
+
+      // start the source playing
+      offlineAudioCtx.oncomplete = function (e) {
+        console.log(e);
+        draw(e.renderedBuffer);
+      };
+    }
+
+    function init() {
+
+      canvas = document.querySelector('#canvas');
+      ctx = canvas.getContext('2d');
+      spandau = document.querySelector('.spandau');
+
+      window.onload = function () {
+        ctx.drawImage(spandau, 0, 0);
+        var imageData = ctx.getImageData(0, 0, 1400, 600).data;
+        playImage(imageData);
+      }
+    }
+
+    init();
+    </script>
+  </body>
+</html>
