@@ -23,7 +23,7 @@
           dryLevel: 1,
           wetLevel: 1,
           level: 1,
-          impulse: "/ir_sound_1.mp3" // @TODO add more options, maybe API call for search in real time?
+          impulse: "ir_sound_1.mp3" // @TODO add more options, maybe API call for search in real time?
         },
         biquad: {
           active: false,
