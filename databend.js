@@ -251,6 +251,9 @@
 
           var otherBiquadFilter = this.audioCtx.createBiquadFilter();
           this.oscillator.connect(otherBiquadFilter);
+          otherBiquadFilter.type = effects.biquad.type;
+          otherBiquadFilter.frequency.value = effects.biquad.biquadFrequency;
+          otherBiquadFilter.gain.value = effects.biquad.biquadGain;
           otherBiquadFilter.connect(this.audioCtx.destination);
         }
 

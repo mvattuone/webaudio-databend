@@ -21,12 +21,18 @@
       .upload.hover {
         background-color: cyan;
       }
+
+      label {
+        display: block;
+        text-align: center;
+      }
     </style>
   </head>
   <body>
     <div class="upload">
       <p>Drop image here to upload</p>
     </div>
+    <label><input type="file" /> Or upload a file</label>
 
 
     <script>
@@ -80,6 +86,12 @@
         request.send();
 
         var upload = document.querySelector('.upload');
+        var fileUpload = document.querySelector('input[type=file]');
+        fileUpload.addEventListener('change',  function (e) {
+          upload.classList.remove('upload');
+          fileUpload.style.display = "none";
+          handleImage(e.target.files);
+        });
         upload.ondragover = function () { this.classList.add('hover'); return false; };
         upload.ondragend = function () { this.classList.remove('hover'); return false; };
         upload.ondrop = function (e) {
