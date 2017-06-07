@@ -411,7 +411,6 @@
         var transformedImage = new ImageData(clampedDataArray, this.canvas.width, this.canvas.height)
         transformedImage.data = clampedDataArray; // No idea why I am doing this.
         this.ctx.putImageData(transformedImage, 0, 0);
-        console.log(this.canvas);
         document.body.prepend(this.canvas);
       };
 

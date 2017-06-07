@@ -41,7 +41,6 @@
               Object.keys(databent.effects).forEach(function (effect) {
                 Object.keys(databent.effects[effect]).forEach(function (param) {
                   if (param === 'active') {
-                    console.log(effect);
                     if (effect === 'playAudio') {
                       gui.add(databent.effects[effect], param)
                         .onFinishChange(function () {
