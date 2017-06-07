@@ -41,11 +41,20 @@
               Object.keys(databent.effects).forEach(function (effect) {
                 Object.keys(databent.effects[effect]).forEach(function (param) {
                   if (param === 'active') {
-                    gui.add(databent.effects[effect], param)
-                      .onFinishChange(function () {
-                        databent.render();
-                      })
-                      .name("Enable " + effect);
+                    console.log(effect);
+                    if (effect === 'playAudio') {
+                      gui.add(databent.effects[effect], param)
+                        .onFinishChange(function () {
+                          databent.render();
+                        })
+                        .name("Toggle Audio");
+                    } else {
+                      gui.add(databent.effects[effect], param)
+                        .onFinishChange(function () {
+                          databent.render();
+                        })
+                        .name("Enable " + effect);
+                    }
                   } else {
                     gui.add(databent.effects[effect], param).onFinishChange(function () {
                       databent.render();
@@ -60,6 +69,17 @@
       }
 
       function init() {
+        var url = 'sample.mp3';
+        var request = new XMLHttpRequest();
+        request.open('GET', url, true);
+        request.responseType = 'arraybuffer';
+
+        // Decode asynchronously
+        request.onload = function() {
+          window.track = request.response;
+        }
+        request.send();
+
         var upload = document.querySelector('.upload');
         upload.ondragover = function () { this.classList.add('hover'); return false; };
         upload.ondragend = function () { this.classList.remove('hover'); return false; };

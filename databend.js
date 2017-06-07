@@ -1,8 +1,11 @@
     // Create a Databender instance
     var Databender = function (image, audioCtx) {
-      // Include initial params in data and send to client?
+      var _this = this;
 
       this.effects = {
+        playAudio: {
+          active: false
+        },
         channelShift: {
           active: false,
           weight: 40,
@@ -23,7 +26,7 @@
           dryLevel: 1,
           wetLevel: 1,
           level: 1,
-          impulse: "ir_sound_1.mp3" // @TODO add more options, maybe API call for search in real time?
+          impulse: "CathedralRoom.wav " // @TODO add more options, maybe API call for search in real time?
         },
         biquad: {
           active: false,
@@ -89,11 +92,15 @@
       // flag to determine if channelShifting has occured, as it mutates buffer
       this.channelShifted = false;
 
+      // flag to determine if the AudioBuffer node has started
+      this.soundIsPlaying = false;
+
       // Make an audioBuffer on the audioContext to pass to the offlineAudioCtx AudioBufferSourceNode
       this.audioBuffer = this.audioCtx.createBuffer(this.channels, this.bufferSize, this.audioCtx.sampleRate);
 
       // This gives us the actual ArrayBuffer that contains the data
       this.nowBuffering = this.audioBuffer.getChannelData(0);
+
 
       // set the AudioBuffer buffer to the same as the imageData audioBuffer
       // v. convenient becuase you do not need to convert the data yourself
@@ -127,12 +134,32 @@
         // `Uncaught (in promise) DOMException: cannot startRendering when an OfflineAudioContext is closed
         var offlineAudioCtx = new OfflineAudioContext(this.channels, this.bufferSize, this.audioCtx.sampleRate);
 
-        // @TODO Can we decouple effects from this?
-        var tuna = new Tuna(offlineAudioCtx);
-
         if (!this.effects.channelShift.active && this.channelShifted) {
           this.nowBuffering.set(this.imageData);
         }
+
+        var batchTime = this.audioCtx.baseLatency || (128 / this.audioCtx.sampleRate);
+        var currentTime = 0;
+
+        if (this.soundIsPlaying) {
+          currentTime = databent.audioCtx.currentTime;
+          this.oscillator.stop();
+        }
+
+        this.oscillator = this.audioCtx.createBufferSource();
+        this.audioCtx.decodeAudioData(window.track, function(buffer) {
+          _this.oscillator.buffer = buffer;
+          _this.oscillator.loop = true;
+        });
+
+        this.oscillator.connect(this.audioCtx.destination);
+        if (effects.playAudio.active) {
+          this.soundIsPlaying = true;
+          this.oscillator.start(batchTime + currentTime);
+        } else {
+          this.soundIsPlaying = false;
+        }
+
 
         // Create an AudioBufferSourceNode, which represents an audio source
         // consisting of in-memory audio data
@@ -140,44 +167,25 @@
 
         // Channel shifting is moving certain color components from one pixel to another pixel
         // @NOTE pretty janky and could be better, doesn't really fit w/ this type of databending
-        if (this.effects.channelShift.active) {
+        if (effects.channelShift.active) {
+          var nowBuffering = this.audioBuffer.getChannelData(0);
+          var weight = effects.channelShift.weight;
           for (var i = 0; i < this.bufferSize; i+=4) {
-            if (i % (this.canvas.width / 100) === 0) {
-              var weight = this.effects.channelShift.weight;
-
-              for (var j = 0; j < 10; j++) {
-                if (this.effects.channelShift.shiftBlue) {
-                  var blueComponent = this.nowBuffering[i+2]
-                  var targetGreen = this.nowBuffering[i+1];
-                  this.nowBuffering[i+2] = this.nowBuffering[i + this.canvas.width / weight * 3 + 2];
-                  this.nowBuffering[i + this.canvas.width / weight * 3 + 2] = blueComponent;
-                  this.nowBuffering[i+2] = this.nowBuffering[i + (this.canvas.width)]; //b shift
-                  this.nowBuffering[i+4] = targetGreen;
-                }
-
-
-                if (this.effects.channelShift.shiftGreen) {
-                  var greenComponent = this.nowBuffering[i+1]
-                  var targetRed = this.nowBuffering[i];
-                  this.nowBuffering[i+1] = this.nowBuffering[i + this.canvas.width / weight * 3 + 1];
-                  this.nowBuffering[i + this.canvas.width / weight * 3 + 1] = greenComponent;
-                  this.nowBuffering[i+1] = this.nowBuffering[i + (this.canvas.height)]; //g shift
-                  this.nowBuffering[i+6] = targetRed;
-                }
-
-
-                if (this.effects.channelShift.shiftRed) {
-                  var redComponent = this.nowBuffering[i]
-                  var targetBlue = this.nowBuffering[i+2];
-                  this.nowBuffering[i] = this.nowBuffering[i + this.canvas.width / weight * 3];
-                  this.nowBuffering[i + this.canvas.width / weight * 3] = redComponent;
-                  this.nowBuffering[i + this.canvas.width / 4] = this.nowBuffering[i]; //r shift
-                  this.nowBuffering[i+5] = targetBlue;
-                }
+            if (i % (this.canvas.width / weight) === 0) {
+              if (effects.channelShift.shiftRed) {
+                nowBuffering[i] = 0;
               }
+
+              if (effects.channelShift.shiftGreen) {
+                nowBuffering[i+1] = 0;
+              }
+
+              if (effects.channelShift.shiftBlue) {
+                nowBuffering[i+2] = 0;
+              }
+
             }
           }
-
           this.channelShifted = true;
         }
 
@@ -187,8 +195,8 @@
         // Seems to rotate the image, clockwise if postitive ccw if negative
         if (effects.detune.active) {
           var noEffects = false;
-          console.log(effects.detune.value);
           bufferSource.detune.value = effects.detune.value;
+          this.oscillator.detune.value = effects.detune.value;
         }
 
         // Seems to "play back" the image at a rate equal to the number
@@ -196,26 +204,37 @@
         if (effects.playbackRate.active) {
           var noEffects = false;
           bufferSource.playbackRate.value = effects.playbackRate.value;
+          this.oscillator.playbackRate.value = effects.playbackRate.value;
         }
 
         //  @NOTE: Calling this is when the AudioBufferSourceNode becomes unusable
         bufferSource.start();
 
-        // Seems to rotate the image, clockwise if postitive ccw if negative
-        // bufferSource.detune.value = -20;
-
-        // Seems to play back the image at a rate equal to the number
-        // (i.e. 4 yields 4 smaller rendered images)
-        // bufferSource.playbackRate.value = 0.25;
-
         var noEffects = true;
+        var tuna;
+        var audioCtxTuna;
 
 
         if (effects.bitcrusher.active) {
           var noEffects = false;
+
+          // @TODO Can we decouple effects from this?
+          audioCtxTuna = new Tuna(this.audioCtx);
+
+          var audioCrusher = new audioCtxTuna.Bitcrusher({
+              bits: effects.bitcrusher.bits,
+              normfreq: effects.bitcrusher.normfreq,
+              bufferSize: effects.bitcrusher.bufferSize
+          });
+          this.oscillator.connect(audioCrusher);
+          audioCrusher.connect(this.audioCtx.destination);
+
+          tuna = new Tuna(offlineAudioCtx);
+
           var crusher = new tuna.Bitcrusher({
               bits: effects.bitcrusher.bits,
-              normfreq: effects.bitcrusher.normfreq
+              normfreq: effects.bitcrusher.normfreq,
+              bufferSize: effects.bitcrusher.bufferSize
           });
           bufferSource.connect(crusher);
           crusher.connect(offlineAudioCtx.destination);
@@ -229,6 +248,10 @@
           biquadFilter.gain.value = effects.biquad.biquadGain;
           bufferSource.connect(biquadFilter);
           biquadFilter.connect(offlineAudioCtx.destination);
+
+          var otherBiquadFilter = this.audioCtx.createBiquadFilter();
+          this.oscillator.connect(otherBiquadFilter);
+          otherBiquadFilter.connect(this.audioCtx.destination);
         }
 
 
@@ -238,11 +261,28 @@
           bufferSource.connect(gainNode);
           gainNode.gain.value = effects.gain.value;
           gainNode.connect(offlineAudioCtx.destination);
+
+          var otherGainNode = this.audioCtx.createGain();
+          this.oscillator.connect(otherGainNode);
+          otherGainNode.connect(this.audioCtx.destination);
         }
 
 
         if (effects.pingPong.active) {
           var noEffects = false;
+
+          audioCtxTuna = new Tuna(this.audioCtx);
+
+          var audioPingPong = new audioCtxTuna.PingPongDelay({
+              bits: effects.bitcrusher.bits,
+              normfreq: effects.bitcrusher.normfreq,
+              bufferSize: effects.bitcrusher.bufferSize
+          });
+          this.oscillator.connect(audioPingPong);
+          audioPingPong.connect(this.audioCtx.destination);
+
+          tuna = new Tuna(offlineAudioCtx);
+
           var pingPongDelayNode = new tuna.PingPongDelay({
               wetLevel: effects.pingPong.wetLevel,
               feedback: effects.pingPong.feedback,
@@ -254,6 +294,20 @@
         }
 
         if (effects.phaser.active) {
+          audioCtxTuna = new Tuna(this.audioCtx);
+
+          var audioPhaser = new audioCtxTuna.Phaser({
+            rate: effects.phaser.rate,
+            depth: effects.phaser.depth,
+            feedback: effects.phaser.feedback,
+            stereoPhase: effects.phaser.stereoPhase,
+            baseModulationFrequency: effects.phaser.baseModulationFrequency
+          });
+          this.oscillator.connect(audioPhaser);
+          audioPhaser.connect(this.audioCtx.destination);
+
+          tuna = new Tuna(offlineAudioCtx);
+
           var noEffects = false;
           var phaser = new tuna.Phaser({
             rate: effects.phaser.rate,
@@ -267,6 +321,22 @@
         }
 
         if (effects.convolver.active) {
+          var noEffects = false;
+          audioCtxTuna = new Tuna(this.audioCtx);
+
+          var audioConvolver = new audioCtxTuna.Convolver({
+            highCut: this.effects.convolver.highCut,
+            lowCut: this.effects.convolver.lowCut,
+            dryLevel: this.effects.convolver.dryLevel,
+            wetLevel: this.effects.convolver.wetLevel,
+            level: this.effects.convolver.level,
+            impulse: this.effects.convolver.impulse
+          });
+          this.oscillator.connect(audioConvolver);
+          audioConvolver.connect(this.audioCtx.destination);
+
+          tuna = new Tuna(offlineAudioCtx);
+
           var convolver = new tuna.Convolver({
             highCut: this.effects.convolver.highCut,
             lowCut: this.effects.convolver.lowCut,
@@ -281,6 +351,22 @@
 
         if(effects.wahwah.active) {
           var noEffects = false;
+
+          audioCtxTuna = new Tuna(this.audioCtx);
+
+          var audioWahWah = new audioCtxTuna.WahWah({
+              automode: effects.wahwah.automode,
+              baseFrequency: effects.wahwah.baseFrequency,
+              excursionOctaves: effects.wahwah.excursionOctaves,
+              sweep: effects.wahwah.sweep,
+              resonance: effects.wahwah.resonance,
+              sensitivity: effects.wahwah.sensitivity
+          });
+          this.oscillator.connect(audioWahWah);
+          audioWahWah.connect(this.audioCtx.destination);
+
+          tuna = new Tuna(offlineAudioCtx);
+
           var wahwah = new tuna.WahWah({
               automode: effects.wahwah.automode,
               baseFrequency: effects.wahwah.baseFrequency,
@@ -295,6 +381,7 @@
 
         if (noEffects) {
           bufferSource.connect(offlineAudioCtx.destination);
+          this.oscillator.connect(this.audioCtx.destination);
         }
 
         // Kick off the render, callback will contain rendered buffer in event
