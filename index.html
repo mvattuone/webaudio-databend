@@ -5,7 +5,7 @@
     <title>Webaudio Databending</title>
     <script src="./dat.gui.min.js"></script>
     <script src="./tuna.js"></script>
-    <script src="./databend.js"></script>
+    <script src="./build/databend.js"></script>
     <style>
       .upload {
         border: 1px solid #000;
@@ -42,7 +42,7 @@
         reader.onload = function(event){
             var img = new Image();
             img.onload = function(){
-              databent = new Databender(img);
+              databent = new Databender.default(img);
               var gui = new dat.GUI();
               Object.keys(databent.effects).forEach(function (effect) {
                 Object.keys(databent.effects[effect]).forEach(function (param) {
@@ -50,19 +50,19 @@
                     if (effect === 'playAudio') {
                       gui.add(databent.effects[effect], param)
                         .onFinishChange(function () {
-                          databent.render();
+                          databent.bend();
                         })
                         .name("Toggle Audio");
                     } else {
                       gui.add(databent.effects[effect], param)
                         .onFinishChange(function () {
-                          databent.render();
+                          databent.bend();
                         })
                         .name("Enable " + effect);
                     }
                   } else {
                     gui.add(databent.effects[effect], param).onFinishChange(function () {
-                      databent.render();
+                      databent.bend();
                     });
                   }
                 });
