@@ -1,3 +1,4 @@
+import Tuna from 'tunajs';
 import effects from '../config/effects.json';
 import core from './';
 
