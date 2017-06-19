@@ -123,7 +123,7 @@ module.exports = {
 		"dryLevel": 1,
 		"wetLevel": 1,
 		"level": 1,
-		"impulse": "CathedralRoom.wav "
+		"impulse": "src/static/audio/CathedralRoom.wav "
 	},
 	"biquad": {
 		"active": false,
