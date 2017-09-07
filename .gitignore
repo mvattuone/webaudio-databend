@@ -1,2 +1,4 @@
 node_module
+.DS_Store
+*.webm
 *.mp4
