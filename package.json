@@ -16,4 +16,8 @@
     "url": "https://github.com/mvattuone/webaudio-databend/issues"
   },
   "homepage": "https://github.com/mvattuone/webaudio-databend#readme",
+  "dependencies": {
+    "tunajs": "^1.0.0",
+    "webpack": "^3.5.6"
+  },
 }

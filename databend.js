@@ -1,5 +1,7 @@
+    var Tuna = require('tunajs'); 
+
     // Create a Databender instance
-    var Databender = function (image, audioCtx) {
+    module.exports = function (image, audioCtx) {
       var _this = this;
 
       this.effects = {
@@ -301,7 +303,6 @@
         // putImageData requires an ImageData Object
         // @see https://developer.mozilla.org/en-US/docs/Web/API/ImageData
         var transformedImage = new ImageData(clampedDataArray, this.canvas.width, this.canvas.height)
-        transformedImage.data = clampedDataArray; // No idea why I am doing this.
         this.ctx.putImageData(transformedImage, 0, 0);
         document.body.prepend(this.canvas);
       };
