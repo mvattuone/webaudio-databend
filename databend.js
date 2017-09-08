@@ -1,75 +1,11 @@
     var Tuna = require('tunajs'); 
+    var effects = require('./effects.json');
 
     // Create a Databender instance
     module.exports = function (image, audioCtx) {
       var _this = this;
 
-      this.effects = {
-        channelShift: {
-          active: false,
-          weight: 40,
-          shiftRed: false,
-          shiftBlue: false,
-          shiftGreen: false
-        },
-        bitcrusher: {
-          active: false,
-          bits: 16,
-          normfreq: 0.1,
-          bufferSize: 4096
-        },
-        convolver: {
-          active: false,
-          highCut: 22050,
-          lowCut: 20,
-          dryLevel: 1,
-          wetLevel: 1,
-          level: 1,
-          impulse: "CathedralRoom.wav " // @TODO add more options, maybe API call for search in real time?
-        },
-        biquad: {
-          active: false,
-          type: "highpass",
-          biquadFrequency: 4000,
-          biquadGain: 1
-        },
-        gain: {
-          active: false,
-          value: 1
-        },
-        detune: {
-          active: false,
-          value: 0
-        },
-        playbackRate: {
-          active: false,
-          value: 1
-        },
-        pingPong: {
-          active: false,
-          feedback: 0.3,
-          wetLevel: 0.5,
-          delayTimeLeft: 10,
-          delayTimeRight: 10
-        },
-        phaser: {
-          active: false,
-          rate: 1.2,
-          depth: 0.4,
-          feedback: 0.5,
-          stereoPhase: 10,
-          baseModulationFrequency: 500
-        },
-        wahwah: {
-          active: false,
-          automode: true,
-          baseFrequency: 0.5,
-          excursionOctaves: 2,
-          sweep: 0.2,
-          resonance: 10,
-          sensitivity: 0.5,
-        }
-      }
+      this.effects = effects;
 
       // Create an AudioContext or use existing one
       this.audioCtx = audioCtx ? audioCtx : new AudioContext();
