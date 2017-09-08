@@ -103,9 +103,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
       this.bufferSize = this.imageData.length / this.channels;
 
-      // flag to determine if channelShifting has occured, as it mutates buffer
-      this.channelShifted = false;
-
       // Make an audioBuffer on the audioContext to pass to the offlineAudioCtx AudioBufferSourceNode
       this.audioBuffer = this.audioCtx.createBuffer(this.channels, this.bufferSize, this.audioCtx.sampleRate);
 
@@ -145,37 +142,9 @@ return /******/ (function(modules) { // webpackBootstrap
         // `Uncaught (in promise) DOMException: cannot startRendering when an OfflineAudioContext is closed
         var offlineAudioCtx = new OfflineAudioContext(this.channels, this.bufferSize, this.audioCtx.sampleRate);
 
-        if (!this.effects.channelShift.active && this.channelShifted) {
-          this.nowBuffering.set(this.imageData);
-        }
-
         // Create an AudioBufferSourceNode, which represents an audio source
         // consisting of in-memory audio data
         var bufferSource = offlineAudioCtx.createBufferSource();
-
-        // Channel shifting is moving certain color components from one pixel to another pixel
-        // @NOTE pretty janky and could be better, doesn't really fit w/ this type of databending
-        if (effects.channelShift.active) {
-          var nowBuffering = this.audioBuffer.getChannelData(0);
-          var weight = effects.channelShift.weight;
-          for (var i = 0; i < this.bufferSize; i+=4) {
-            if (i % (this.canvas.width / weight) === 0) {
-              if (effects.channelShift.shiftRed) {
-                nowBuffering[i] = 0;
-              }
-
-              if (effects.channelShift.shiftGreen) {
-                nowBuffering[i+1] = 0;
-              }
-
-              if (effects.channelShift.shiftBlue) {
-                nowBuffering[i+2] = 0;
-              }
-
-            }
-          }
-          this.channelShifted = true;
-        }
 
         // Set buffer to audio buffer containing image data
         bufferSource.buffer = this.audioBuffer;
@@ -2544,7 +2513,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 2 */
 /***/ (function(module, exports) {
 
-module.exports = {"channelShift":{"active":false,"weight":40,"shiftRed":false,"shiftBlue":false,"shiftGreen":false},"bitcrusher":{"active":false,"bits":16,"normfreq":0.1,"bufferSize":4096},"convolver":{"active":false,"highCut":22050,"lowCut":20,"dryLevel":1,"wetLevel":1,"level":1,"impulse":"CathedralRoom.wav"},"biquad":{"active":false,"type":"highpass","biquadFrequency":4000,"biquadGain":1},"gain":{"active":false,"value":1},"detune":{"active":false,"value":0},"playbackRate":{"active":false,"value":1},"pingPong":{"active":false,"feedback":0.3,"wetLevel":0.5,"delayTimeLeft":10,"delayTimeRight":10},"phaser":{"active":false,"rate":1.2,"depth":0.4,"feedback":0.5,"stereoPhase":10,"baseModulationFrequency":500},"wahwah":{"active":false,"automode":true,"baseFrequency":0.5,"excursionOctaves":2,"sweep":0.2,"resonance":10,"sensitivity":0.5}}
+module.exports = {"bitcrusher":{"active":false,"bits":16,"normfreq":0.1,"bufferSize":4096},"convolver":{"active":false,"highCut":22050,"lowCut":20,"dryLevel":1,"wetLevel":1,"level":1,"impulse":"CathedralRoom.wav"},"biquad":{"active":false,"type":"highpass","biquadFrequency":4000,"biquadGain":1},"gain":{"active":false,"value":1},"detune":{"active":false,"value":0},"playbackRate":{"active":false,"value":1},"pingPong":{"active":false,"feedback":0.3,"wetLevel":0.5,"delayTimeLeft":10,"delayTimeRight":10},"phaser":{"active":false,"rate":1.2,"depth":0.4,"feedback":0.5,"stereoPhase":10,"baseModulationFrequency":500},"wahwah":{"active":false,"automode":true,"baseFrequency":0.5,"excursionOctaves":2,"sweep":0.2,"resonance":10,"sensitivity":0.5}}
 
 /***/ })
 /******/ ]);

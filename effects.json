@@ -1,11 +1,4 @@
 {
-  "channelShift": {
-    "active": false,
-    "weight": 40,
-    "shiftRed": false,
-    "shiftBlue": false,
-    "shiftGreen": false
-  },
   "bitcrusher": {
     "active": false,
     "bits": 16,

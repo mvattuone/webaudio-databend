@@ -24,9 +24,6 @@
 
       this.bufferSize = this.imageData.length / this.channels;
 
-      // flag to determine if channelShifting has occured, as it mutates buffer
-      this.channelShifted = false;
-
       // Make an audioBuffer on the audioContext to pass to the offlineAudioCtx AudioBufferSourceNode
       this.audioBuffer = this.audioCtx.createBuffer(this.channels, this.bufferSize, this.audioCtx.sampleRate);
 
@@ -66,37 +63,9 @@
         // `Uncaught (in promise) DOMException: cannot startRendering when an OfflineAudioContext is closed
         var offlineAudioCtx = new OfflineAudioContext(this.channels, this.bufferSize, this.audioCtx.sampleRate);
 
-        if (!this.effects.channelShift.active && this.channelShifted) {
-          this.nowBuffering.set(this.imageData);
-        }
-
         // Create an AudioBufferSourceNode, which represents an audio source
         // consisting of in-memory audio data
         var bufferSource = offlineAudioCtx.createBufferSource();
-
-        // Channel shifting is moving certain color components from one pixel to another pixel
-        // @NOTE pretty janky and could be better, doesn't really fit w/ this type of databending
-        if (effects.channelShift.active) {
-          var nowBuffering = this.audioBuffer.getChannelData(0);
-          var weight = effects.channelShift.weight;
-          for (var i = 0; i < this.bufferSize; i+=4) {
-            if (i % (this.canvas.width / weight) === 0) {
-              if (effects.channelShift.shiftRed) {
-                nowBuffering[i] = 0;
-              }
-
-              if (effects.channelShift.shiftGreen) {
-                nowBuffering[i+1] = 0;
-              }
-
-              if (effects.channelShift.shiftBlue) {
-                nowBuffering[i+2] = 0;
-              }
-
-            }
-          }
-          this.channelShifted = true;
-        }
 
         // Set buffer to audio buffer containing image data
         bufferSource.buffer = this.audioBuffer;
