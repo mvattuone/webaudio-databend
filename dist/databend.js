@@ -98,7 +98,7 @@ return /******/ (function(modules) { // webpackBootstrap
       var ctx = this.ctx = canvas.getContext('2d');
 
       // Draw image to canvas and get image data
-      ctx.drawImage(image, 0, 0);
+      ctx.putImageData(image, 0, 0);
       this.imageData = ctx.getImageData(0, 0, image.width, image.height).data;
 
       this.bufferSize = this.imageData.length / this.channels;
@@ -268,6 +268,7 @@ return /******/ (function(modules) { // webpackBootstrap
         // Render the databent image.
         offlineAudioCtx.oncomplete = function (e) {
           // Instead of starting the bufferSource, move data back into Canvas land.
+          _this.renderedBuffer = e.renderedBuffer;
           _this.draw(e.renderedBuffer);
         };
       };
@@ -286,9 +287,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
         // putImageData requires an ImageData Object
         // @see https://developer.mozilla.org/en-US/docs/Web/API/ImageData
-        var transformedImage = new ImageData(clampedDataArray, this.canvas.width, this.canvas.height)
-        this.ctx.putImageData(transformedImage, 0, 0);
-        document.body.prepend(this.canvas);
+        this.transformedImage = new ImageData(clampedDataArray, this.canvas.width, this.canvas.height)
+        if (!document.querySelector('canvas')) {
+          document.body.prepend(this.canvas);
+        }
+        document.querySelector('canvas').getContext('2d').putImageData(this.transformedImage, 0, 0);
       };
 
       this.render(this.imageData);

@@ -19,7 +19,7 @@
       var ctx = this.ctx = canvas.getContext('2d');
 
       // Draw image to canvas and get image data
-      ctx.drawImage(image, 0, 0);
+      ctx.putImageData(image, 0, 0);
       this.imageData = ctx.getImageData(0, 0, image.width, image.height).data;
 
       this.bufferSize = this.imageData.length / this.channels;
@@ -59,12 +59,10 @@
         var _this = this;
         var effects = this.effects;
 
-        // @NOTE: This has to be instantiated every time we "render" because
-        // `Uncaught (in promise) DOMException: cannot startRendering when an OfflineAudioContext is closed
+        // Create offlineAudioCtx that will house our rendered buffer
         var offlineAudioCtx = new OfflineAudioContext(this.channels, this.bufferSize, this.audioCtx.sampleRate);
 
-        // Create an AudioBufferSourceNode, which represents an audio source
-        // consisting of in-memory audio data
+        // Create an AudioBufferSourceNode, which represents an audio source consisting of in-memory audio data
         var bufferSource = offlineAudioCtx.createBufferSource();
 
         // Set buffer to audio buffer containing image data
@@ -189,6 +187,7 @@
         // Render the databent image.
         offlineAudioCtx.oncomplete = function (e) {
           // Instead of starting the bufferSource, move data back into Canvas land.
+          _this.renderedBuffer = e.renderedBuffer;
           _this.draw(e.renderedBuffer);
         };
       };
@@ -207,9 +206,11 @@
 
         // putImageData requires an ImageData Object
         // @see https://developer.mozilla.org/en-US/docs/Web/API/ImageData
-        var transformedImage = new ImageData(clampedDataArray, this.canvas.width, this.canvas.height)
-        this.ctx.putImageData(transformedImage, 0, 0);
-        document.body.prepend(this.canvas);
+        this.transformedImage = new ImageData(clampedDataArray, this.canvas.width, this.canvas.height)
+        if (!document.querySelector('canvas')) {
+          document.body.prepend(this.canvas);
+        }
+        document.querySelector('canvas').getContext('2d').putImageData(this.transformedImage, 0, 0);
       };
 
       this.render(this.imageData);
