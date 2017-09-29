@@ -138,12 +138,10 @@ return /******/ (function(modules) { // webpackBootstrap
         var _this = this;
         var effects = this.effects;
 
-        // @NOTE: This has to be instantiated every time we "render" because
-        // `Uncaught (in promise) DOMException: cannot startRendering when an OfflineAudioContext is closed
+        // Create offlineAudioCtx that will house our rendered buffer
         var offlineAudioCtx = new OfflineAudioContext(this.channels, this.bufferSize, this.audioCtx.sampleRate);
 
-        // Create an AudioBufferSourceNode, which represents an audio source
-        // consisting of in-memory audio data
+        // Create an AudioBufferSourceNode, which represents an audio source consisting of in-memory audio data
         var bufferSource = offlineAudioCtx.createBufferSource();
 
         // Set buffer to audio buffer containing image data
