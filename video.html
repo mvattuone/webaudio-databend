@@ -36,67 +36,62 @@
 
 
     <script>
-      var handleDatGUI = function(databent){
+      function handleDatGUI(databent){
         var gui = new dat.GUI();
         Object.keys(databent.effects).forEach(function (effect) {
-          Object.keys(databent.effects[effect]).forEach(function (param) {
-            if (param === 'active') {
-              if (effect === 'playAudio') {
-                gui.add(databent.effects[effect], param)
-                  .onFinishChange(function () {
-                    databent.render();
-                  })
-                  .name("Toggle Audio");
+          if (effect === 'frameRate') { 
+            gui.add(databent.effects, effect);
+          } else {
+            Object.keys(databent.effects[effect]).forEach(function (param) {
+              if (param === 'active') {
+                if (effect === 'playAudio') {
+                  gui.add(databent.effects[effect], param)
+                    .name("Toggle Audio");
+                } else {
+                  gui.add(databent.effects[effect], param)
+                    .name("Enable " + effect);
+                }
               } else {
-                gui.add(databent.effects[effect], param)
-                  .onFinishChange(function () {
-                    databent.render();
-                  })
-                  .name("Enable " + effect);
+                gui.add(databent.effects[effect], param)            
               }
-            } else {
-              gui.add(databent.effects[effect], param).onFinishChange(function () {
-                databent.render();
-              });
-            }
-          });
+            });
+          }
         });
       }
 
-      function draw(v,c,w,h) {
-        if(v.paused || v.ended) return false;
-        c.drawImage(v,0,0,w,h);
-        var imageData = c.getImageData(0,0,w,h);
-        var databent = new Databender(imageData, audioCtx);
-        if (!hasGUI) {
-          handleDatGUI(databent);
-          hasGUI = true;
+      function renderVideoToCanvas(v,c,w,h) {
+        var timer;
+        var time;
+
+        function drawFrame(v,c,w,h) {
+          if(v.paused || v.ended) return false;
+          c.drawImage(v,0,0,w,h);
+          var imageData = c.getImageData(0,0,w,h);
+          var databent = databender.bend(imageData).then(function(renderedBuffer) {
+            databender.draw(renderedBuffer, c);
+          });
         }
-        if (databent.transformedImage) {
-          databent.ctx.putImageData(databent.transformedImage, 0, 0);
-        }
-        setTimeout(draw,150,v,c,w,h);
+
+        (function repeat() {
+          time = 1000 / databender.effects.frameRate;  
+          drawFrame(v,c,w,h);
+          timer = setTimeout(repeat, time);
+        }());
       }
 
-      function handleVideo(e){
-        hasDatGUI = false;
+      function handleVideoUpload(e){
         var reader = new FileReader();
-        var _this = this;
         var canvas = document.createElement('canvas');
-        canvas.width = 400;
-        canvas.height = 400;
-        var cw = canvas.width;
-        var ch = canvas.height;
         var context = canvas.getContext('2d');
         var video = document.createElement('video');
-        video.width = 400;
-        video.height = 400;
+        video.addEventListener('loadedmetadata', function (event) {
+          canvas.width = this.videoWidth; 
+          canvas.height = this.videoHeight; 
+        });
         video.addEventListener('play', function () {
-          draw(this, context, cw, ch);
+          renderVideoToCanvas(this, context, canvas.width, canvas.height);
         }, false);
         reader.onload = function(event){
-          
-          
           video.src = this.result;
           video.type = "video/mp4";
           video.loop = true;
@@ -114,9 +109,11 @@
         upload.ondragend = function () { this.classList.remove('hover'); return false; };
         upload.ondrop = function (e) {
           e.preventDefault();
-          this.classList.remove('upload');
-          handleVideo(e.dataTransfer.files);
+          document.querySelector('.upload').style.display = 'none';
+          handleVideoUpload(e.dataTransfer.files);
         }
+        databender = new Databender(audioCtx);
+        handleDatGUI(databender);
       };
 
       init();

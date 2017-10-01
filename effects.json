@@ -1,4 +1,5 @@
 {
+  "frameRate": 30,
   "bitcrusher": {
     "active": false,
     "bits": 16,
