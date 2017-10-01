@@ -15,7 +15,7 @@
         var bufferSize = imageData.data.length / this.channels;
 
         // Make an audioBuffer on the audioContext to pass to the offlineAudioCtx AudioBufferSourceNode
-        var audioBuffer = this.audioCtx.createBuffer(this.channels, bufferSize, this.audioCtx.sampleRate);
+        var audioBuffer = this.audioCtx.createBuffer(this.channels, bufferSize, databender.effects.sampleRate); 
 
         // This gives us the actual ArrayBuffer that contains the data
         var nowBuffering = audioBuffer.getChannelData(0);
@@ -24,21 +24,6 @@
         // v. convenient becuase you do not need to convert the data yourself
         nowBuffering.set(imageData.data);
 
-        return this.render(audioBuffer);
-      }
-
-      this.toggleEffect = function (effect, params) {
-        this.effects[effect].active = !this.effects[effect].active
-        return this.render(audioBuffer);
-      }
-
-      this.setEffect = function (effect) {
-        this.effects[effect].active = true
-        return this.render(audioBuffer);
-      }
-
-      this.unsetEffect = function (effect) {
-        effects[effect].active = false
         return this.render(audioBuffer);
       }
 
@@ -59,20 +44,50 @@
           // Seems to rotate the image, clockwise if postitive ccw if negative
           if (effects.detune.active) {
             var noEffects = false;
-            bufferSource.detune.value = effects.detune.value;
+            if (effects.detune.randomize) {
+              var waveArray = new Float32Array(effects.detune.randomValues);
+              var denominators = [10, 100, 1000];
+              for (i=0;i<effects.detune.randomValues;i++) {
+                var numerator = Math.floor((effects.detune.value * Math.random()) + 1); 
+                var denominator = denominators[Math.floor(Math.random() * 2)];
+                var random = (numerator / denominator); 
+                waveArray[i] = random;  
+              }
+            }
+            if (effects.detune.randomize) {
+              bufferSource.detune.setValueCurveAtTime(waveArray, 0, effects.detune.areaOfEffect);
+            } else if (effects.detune.enablePartial) {
+              bufferSource.detune.setTargetAtTime(effects.detune.value, effects.detune.areaOfEffect, 1);
+            } else {
+              bufferSource.detune.value = effects.detune.value;
+            };
           }
 
           // Seems to "play back" the image at a rate equal to the number
           // (i.e. 4 yields 4 smaller rendered images)
           if (effects.playbackRate.active) {
             var noEffects = false;
-            bufferSource.playbackRate.value = effects.playbackRate.value;
+            if (effects.playbackRate.randomize) {
+              var waveArray = new Float32Array(effects.playbackRate.randomValues);
+              var denominators = [10, 100, 1000];
+              for (i=0;i<effects.playbackRate.randomValues;i++) {
+                var random = Math.floor((effects.playbackRate.value * Math.random()) + 1); 
+                waveArray[i] = random;  
+              }
+            }
+            if (effects.playbackRate.randomize) {
+              bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, effects.playbackRate.areaOfEffect);
+            } else if (effects.playbackRate.enablePartial) {
+              
+              bufferSource.playbackRate.setTargetAtTime(effects.playbackRate.value, effects.playbackRate.areaOfEffect, 1);
+            } else {
+              bufferSource.playbackRate.value = effects.playbackRate.value;
+            };
           }
 
           //  @NOTE: Calling this is when the AudioBufferSourceNode becomes unusable
           bufferSource.start();
 
-          // @TODO Can we decouple effects from this?
           var noEffects = true;
           var tuna = new Tuna(offlineAudioCtx);
 
@@ -90,10 +105,26 @@
 
           if (effects.biquad.active) {
             var noEffects = false;
+            if (effects.biquad.randomize) {
+              var waveArray = new Float32Array(effects.biquad.randomValues);
+              var denominators = [10, 100, 1000];
+              for (i=0;i<effects.biquad.randomValues;i++) {
+                var numerator = Math.floor((effects.biquad.biquadFrequency * Math.random()) + 1); 
+                var denominator = denominators[Math.floor(Math.random() * 2)];
+                var random = (numerator / denominator); 
+                waveArray[i] = random;  
+              }
+            }
             var biquadFilter = offlineAudioCtx.createBiquadFilter();
             biquadFilter.type = effects.biquad.type;
-            biquadFilter.frequency.value = effects.biquad.biquadFrequency;
-            biquadFilter.gain.value = effects.biquad.biquadGain;
+            if (effects.biquad.randomize) {
+              biquadFilter.frequency.setValueCurveAtTime(waveArray, 0, effects.biquad.areaOfEffect);
+            } else if (effects.biquad.enablePartial) {
+              biquadFilter.frequency.setTargetAtTime(effects.biquad.biquadFrequency, 0, effects.biquad.areaOfEffect);
+            } else {
+              biquadFilter.frequency.value = effects.biquad.biquadFrequency;
+            };
+            biquadFilter.Q.value = effects.biquad.quality;
             bufferSource.connect(biquadFilter);
             biquadFilter.connect(offlineAudioCtx.destination);
           }

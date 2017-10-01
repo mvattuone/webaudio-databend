@@ -1,5 +1,6 @@
 {
   "frameRate": 30,
+  "sampleRate": 44100,
   "bitcrusher": {
     "active": false,
     "bits": 16,
@@ -17,9 +18,13 @@
   },
   "biquad": {
     "active": false,
+    "areaOfEffect": 1,
+    "enablePartial": false,
+    "randomize": false,
+    "quality": 1,
+    "randomValues": 2,
     "type": "highpass",
-    "biquadFrequency": 4000,
-    "biquadGain": 1
+    "biquadFrequency": 4000
   },
   "gain": {
     "active": false,
@@ -27,10 +32,18 @@
   },
   "detune": {
     "active": false,
+    "areaOfEffect": 1,
+    "enablePartial": false,
+    "randomize": false,
+    "randomValues": 2,
     "value": 0
   },
   "playbackRate": {
     "active": false,
+    "areaOfEffect": 1,
+    "enablePartial": false,
+    "randomize": false,
+    "randomValues": 2,
     "value": 1
   },
   "pingPong": {

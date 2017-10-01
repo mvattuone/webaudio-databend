@@ -39,7 +39,7 @@
       function handleDatGUI(databent){
         var gui = new dat.GUI();
         Object.keys(databent.effects).forEach(function (effect) {
-          if (effect === 'frameRate') { 
+          if (effect === 'frameRate' || effect === 'sampleRate') { 
             gui.add(databent.effects, effect);
           } else {
             Object.keys(databent.effects[effect]).forEach(function (param) {

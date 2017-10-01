@@ -94,7 +94,7 @@ return /******/ (function(modules) { // webpackBootstrap
         var bufferSize = imageData.data.length / this.channels;
 
         // Make an audioBuffer on the audioContext to pass to the offlineAudioCtx AudioBufferSourceNode
-        var audioBuffer = this.audioCtx.createBuffer(this.channels, bufferSize, this.audioCtx.sampleRate);
+        var audioBuffer = this.audioCtx.createBuffer(this.channels, bufferSize, databender.effects.sampleRate); 
 
         // This gives us the actual ArrayBuffer that contains the data
         var nowBuffering = audioBuffer.getChannelData(0);
@@ -103,21 +103,6 @@ return /******/ (function(modules) { // webpackBootstrap
         // v. convenient becuase you do not need to convert the data yourself
         nowBuffering.set(imageData.data);
 
-        return this.render(audioBuffer);
-      }
-
-      this.toggleEffect = function (effect, params) {
-        this.effects[effect].active = !this.effects[effect].active
-        return this.render(audioBuffer);
-      }
-
-      this.setEffect = function (effect) {
-        this.effects[effect].active = true
-        return this.render(audioBuffer);
-      }
-
-      this.unsetEffect = function (effect) {
-        effects[effect].active = false
         return this.render(audioBuffer);
       }
 
@@ -138,20 +123,50 @@ return /******/ (function(modules) { // webpackBootstrap
           // Seems to rotate the image, clockwise if postitive ccw if negative
           if (effects.detune.active) {
             var noEffects = false;
-            bufferSource.detune.value = effects.detune.value;
+            if (effects.detune.randomize) {
+              var waveArray = new Float32Array(effects.detune.randomValues);
+              var denominators = [10, 100, 1000];
+              for (i=0;i<effects.detune.randomValues;i++) {
+                var numerator = Math.floor((effects.detune.value * Math.random()) + 1); 
+                var denominator = denominators[Math.floor(Math.random() * 2)];
+                var random = (numerator / denominator); 
+                waveArray[i] = random;  
+              }
+            }
+            if (effects.detune.randomize) {
+              bufferSource.detune.setValueCurveAtTime(waveArray, 0, effects.detune.areaOfEffect);
+            } else if (effects.detune.enablePartial) {
+              bufferSource.detune.setTargetAtTime(effects.detune.value, effects.detune.areaOfEffect, 1);
+            } else {
+              bufferSource.detune.value = effects.detune.value;
+            };
           }
 
           // Seems to "play back" the image at a rate equal to the number
           // (i.e. 4 yields 4 smaller rendered images)
           if (effects.playbackRate.active) {
             var noEffects = false;
-            bufferSource.playbackRate.value = effects.playbackRate.value;
+            if (effects.playbackRate.randomize) {
+              var waveArray = new Float32Array(effects.playbackRate.randomValues);
+              var denominators = [10, 100, 1000];
+              for (i=0;i<effects.playbackRate.randomValues;i++) {
+                var random = Math.floor((effects.playbackRate.value * Math.random()) + 1); 
+                waveArray[i] = random;  
+              }
+            }
+            if (effects.playbackRate.randomize) {
+              bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, effects.playbackRate.areaOfEffect);
+            } else if (effects.playbackRate.enablePartial) {
+              
+              bufferSource.playbackRate.setTargetAtTime(effects.playbackRate.value, effects.playbackRate.areaOfEffect, 1);
+            } else {
+              bufferSource.playbackRate.value = effects.playbackRate.value;
+            };
           }
 
           //  @NOTE: Calling this is when the AudioBufferSourceNode becomes unusable
           bufferSource.start();
 
-          // @TODO Can we decouple effects from this?
           var noEffects = true;
           var tuna = new Tuna(offlineAudioCtx);
 
@@ -169,10 +184,26 @@ return /******/ (function(modules) { // webpackBootstrap
 
           if (effects.biquad.active) {
             var noEffects = false;
+            if (effects.biquad.randomize) {
+              var waveArray = new Float32Array(effects.biquad.randomValues);
+              var denominators = [10, 100, 1000];
+              for (i=0;i<effects.biquad.randomValues;i++) {
+                var numerator = Math.floor((effects.biquad.biquadFrequency * Math.random()) + 1); 
+                var denominator = denominators[Math.floor(Math.random() * 2)];
+                var random = (numerator / denominator); 
+                waveArray[i] = random;  
+              }
+            }
             var biquadFilter = offlineAudioCtx.createBiquadFilter();
             biquadFilter.type = effects.biquad.type;
-            biquadFilter.frequency.value = effects.biquad.biquadFrequency;
-            biquadFilter.gain.value = effects.biquad.biquadGain;
+            if (effects.biquad.randomize) {
+              biquadFilter.frequency.setValueCurveAtTime(waveArray, 0, effects.biquad.areaOfEffect);
+            } else if (effects.biquad.enablePartial) {
+              biquadFilter.frequency.setTargetAtTime(effects.biquad.biquadFrequency, 0, effects.biquad.areaOfEffect);
+            } else {
+              biquadFilter.frequency.value = effects.biquad.biquadFrequency;
+            };
+            biquadFilter.Q.value = effects.biquad.quality;
             bufferSource.connect(biquadFilter);
             biquadFilter.connect(offlineAudioCtx.destination);
           }
@@ -2501,7 +2532,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 2 */
 /***/ (function(module, exports) {
 
-module.exports = {"frameRate":30,"bitcrusher":{"active":false,"bits":16,"normfreq":0.1,"bufferSize":4096},"convolver":{"active":false,"highCut":22050,"lowCut":20,"dryLevel":1,"wetLevel":1,"level":1,"impulse":"CathedralRoom.wav"},"biquad":{"active":false,"type":"highpass","biquadFrequency":4000,"biquadGain":1},"gain":{"active":false,"value":1},"detune":{"active":false,"value":0},"playbackRate":{"active":false,"value":1},"pingPong":{"active":false,"feedback":0.3,"wetLevel":0.5,"delayTimeLeft":10,"delayTimeRight":10},"phaser":{"active":false,"rate":1.2,"depth":0.4,"feedback":0.5,"stereoPhase":10,"baseModulationFrequency":500},"wahwah":{"active":false,"automode":true,"baseFrequency":0.5,"excursionOctaves":2,"sweep":0.2,"resonance":10,"sensitivity":0.5}}
+module.exports = {"frameRate":30,"sampleRate":44100,"bitcrusher":{"active":false,"bits":16,"normfreq":0.1,"bufferSize":4096},"convolver":{"active":false,"highCut":22050,"lowCut":20,"dryLevel":1,"wetLevel":1,"level":1,"impulse":"CathedralRoom.wav"},"biquad":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"quality":1,"randomValues":2,"type":"highpass","biquadFrequency":4000},"gain":{"active":false,"value":1},"detune":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":0},"playbackRate":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":1},"pingPong":{"active":false,"feedback":0.3,"wetLevel":0.5,"delayTimeLeft":10,"delayTimeRight":10},"phaser":{"active":false,"rate":1.2,"depth":0.4,"feedback":0.5,"stereoPhase":10,"baseModulationFrequency":500},"wahwah":{"active":false,"automode":true,"baseFrequency":0.5,"excursionOctaves":2,"sweep":0.2,"resonance":10,"sensitivity":0.5}}
 
 /***/ })
 /******/ ]);
