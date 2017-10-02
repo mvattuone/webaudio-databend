@@ -125,18 +125,19 @@ return /******/ (function(modules) { // webpackBootstrap
             var noEffects = false;
             if (effects.detune.randomize) {
               var waveArray = new Float32Array(effects.detune.randomValues);
-              var denominators = [10, 100, 1000];
+              var denominators = [1, 10, 100, 1000];
               for (i=0;i<effects.detune.randomValues;i++) {
                 var numerator = Math.floor((effects.detune.value * Math.random()) + 1); 
-                var denominator = denominators[Math.floor(Math.random() * 2)];
+                var denominator = denominators[Math.floor(Math.random() * 3)];
                 var random = (numerator / denominator); 
+                console.log(random);
                 waveArray[i] = random;  
               }
             }
             if (effects.detune.randomize) {
-              bufferSource.detune.setValueCurveAtTime(waveArray, 0, effects.detune.areaOfEffect);
+              bufferSource.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
             } else if (effects.detune.enablePartial) {
-              bufferSource.detune.setTargetAtTime(effects.detune.value, effects.detune.areaOfEffect, 1);
+              bufferSource.detune.setTargetAtTime(effects.detune.value, 0, effects.detune.areaOfEffect);
             } else {
               bufferSource.detune.value = effects.detune.value;
             };
@@ -148,17 +149,16 @@ return /******/ (function(modules) { // webpackBootstrap
             var noEffects = false;
             if (effects.playbackRate.randomize) {
               var waveArray = new Float32Array(effects.playbackRate.randomValues);
-              var denominators = [10, 100, 1000];
               for (i=0;i<effects.playbackRate.randomValues;i++) {
                 var random = Math.floor((effects.playbackRate.value * Math.random()) + 1); 
                 waveArray[i] = random;  
               }
             }
             if (effects.playbackRate.randomize) {
-              bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, effects.playbackRate.areaOfEffect);
+              bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
             } else if (effects.playbackRate.enablePartial) {
               
-              bufferSource.playbackRate.setTargetAtTime(effects.playbackRate.value, effects.playbackRate.areaOfEffect, 1);
+              bufferSource.playbackRate.setTargetAtTime(effects.playbackRate.value, 0, effects.playbackRate.areaOfEffect);
             } else {
               bufferSource.playbackRate.value = effects.playbackRate.value;
             };
@@ -197,13 +197,15 @@ return /******/ (function(modules) { // webpackBootstrap
             var biquadFilter = offlineAudioCtx.createBiquadFilter();
             biquadFilter.type = effects.biquad.type;
             if (effects.biquad.randomize) {
-              biquadFilter.frequency.setValueCurveAtTime(waveArray, 0, effects.biquad.areaOfEffect);
+              biquadFilter.frequency.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
+              biquadFilter.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
             } else if (effects.biquad.enablePartial) {
               biquadFilter.frequency.setTargetAtTime(effects.biquad.biquadFrequency, 0, effects.biquad.areaOfEffect);
             } else {
               biquadFilter.frequency.value = effects.biquad.biquadFrequency;
             };
             biquadFilter.Q.value = effects.biquad.quality;
+            biquadFilter.detune.value = effects.biquad.detune;
             bufferSource.connect(biquadFilter);
             biquadFilter.connect(offlineAudioCtx.destination);
           }
@@ -2532,7 +2534,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 2 */
 /***/ (function(module, exports) {
 
-module.exports = {"frameRate":30,"sampleRate":44100,"bitcrusher":{"active":false,"bits":16,"normfreq":0.1,"bufferSize":4096},"convolver":{"active":false,"highCut":22050,"lowCut":20,"dryLevel":1,"wetLevel":1,"level":1,"impulse":"CathedralRoom.wav"},"biquad":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"quality":1,"randomValues":2,"type":"highpass","biquadFrequency":4000},"gain":{"active":false,"value":1},"detune":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":0},"playbackRate":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":1},"pingPong":{"active":false,"feedback":0.3,"wetLevel":0.5,"delayTimeLeft":10,"delayTimeRight":10},"phaser":{"active":false,"rate":1.2,"depth":0.4,"feedback":0.5,"stereoPhase":10,"baseModulationFrequency":500},"wahwah":{"active":false,"automode":true,"baseFrequency":0.5,"excursionOctaves":2,"sweep":0.2,"resonance":10,"sensitivity":0.5}}
+module.exports = {"playAudio":false,"frameRate":30,"sampleRate":44100,"bitcrusher":{"active":false,"bits":16,"normfreq":0.1,"bufferSize":4096},"convolver":{"active":false,"highCut":22050,"lowCut":20,"dryLevel":1,"wetLevel":1,"level":1,"impulse":"CathedralRoom.wav"},"biquad":{"active":false,"areaOfEffect":1,"detune":0,"enablePartial":false,"randomize":false,"quality":1,"randomValues":2,"type":"highpass","biquadFrequency":4000},"gain":{"active":false,"value":1},"detune":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":0},"playbackRate":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":1},"pingPong":{"active":false,"feedback":0.3,"wetLevel":0.5,"delayTimeLeft":10,"delayTimeRight":10},"phaser":{"active":false,"rate":1.2,"depth":0.4,"feedback":0.5,"stereoPhase":10,"baseModulationFrequency":500},"wahwah":{"active":false,"automode":true,"baseFrequency":0.5,"excursionOctaves":2,"sweep":0.2,"resonance":10,"sensitivity":0.5}}
 
 /***/ })
 /******/ ]);

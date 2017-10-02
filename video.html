@@ -4,9 +4,13 @@
     <meta charset="utf-8">
     <title>Webaudio Databending</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.5/dat.gui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tunajs/1.0.0/tuna-min.js"></script>
     <script src="dist/databend.js"></script>
     <style>
+      canvas {
+        width: 800px;
+        height: 600px;
+      }
+
       .upload {
         border: 1px solid #000;
         margin: 0 auto;
@@ -36,23 +40,64 @@
 
 
     <script>
-      function handleDatGUI(databent){
+      function handleDatGUI(databender){
         var gui = new dat.GUI();
-        Object.keys(databent.effects).forEach(function (effect) {
+        Object.keys(databender.effects).forEach(function (effect) {
           if (effect === 'frameRate' || effect === 'sampleRate') { 
-            gui.add(databent.effects, effect);
-          } else {
-            Object.keys(databent.effects[effect]).forEach(function (param) {
-              if (param === 'active') {
-                if (effect === 'playAudio') {
-                  gui.add(databent.effects[effect], param)
-                    .name("Toggle Audio");
+            gui.add(databender.effects, effect)
+          } else if (effect === 'playAudio') {
+            gui.add(databender.effects, effect)
+              .onFinishChange(function (value) {
+                if (!value) {
+                  var bufferSource = audioCtx.createBufferSource();
+                  bufferSource.loop = true;
+                  databender.render(window.trackBuffer).then(function (buffer) { 
+                    window.prevBufferSource.stop();
+                    bufferSource.buffer = buffer;
+                    bufferSource.connect(audioCtx.destination);
+                    window.prevBufferSource = bufferSource;
+                  });
                 } else {
-                  gui.add(databent.effects[effect], param)
-                    .name("Enable " + effect);
+                  window.prevBufferSource.start(audioCtx.currentTime);
                 }
+            });
+          } else {
+            Object.keys(databender.effects[effect]).forEach(function (param) {
+              if (param === 'active') {
+                gui.add(databender.effects[effect], param)
+                  .name("Enable " + effect)
+                  .onFinishChange(function () { 
+                    if (databender.effects.playAudio) {
+                      var bufferSource = audioCtx.createBufferSource();
+                      bufferSource.loop = true;
+                      databender.render(window.trackBuffer).then(function (buffer) { 
+                        if (window.prevBufferSource) {
+                          window.prevBufferSource.stop();
+                        }
+                        bufferSource.buffer = buffer;
+                        bufferSource.connect(audioCtx.destination);
+                        bufferSource.start(audioCtx.currentTime);
+                        window.prevBufferSource = bufferSource;
+                      });
+                    }
+                  });
               } else {
-                gui.add(databent.effects[effect], param)            
+                gui.add(databender.effects[effect], param)            
+                  .onFinishChange(function () { 
+                    if (databender.effects.playAudio) {
+                      var bufferSource = audioCtx.createBufferSource();
+                      bufferSource.loop = true;
+                      databender.render(window.trackBuffer).then(function (buffer) { 
+                        if (window.prevBufferSource) {
+                          window.prevBufferSource.stop();
+                        }
+                        bufferSource.buffer = buffer;
+                        bufferSource.connect(audioCtx.destination);
+                        bufferSource.start(audioCtx.currentTime);
+                        window.prevBufferSource = bufferSource;
+                      });
+                    }
+                  });
               }
             });
           }
@@ -93,6 +138,7 @@
         }, false);
         reader.onload = function(event){
           video.src = this.result;
+          video.muted = true;
           video.type = "video/mp4";
           video.loop = true;
           video.play();
@@ -100,8 +146,33 @@
         reader.readAsDataURL(e[0]);
       }
 
-      function init() {
+      function loadTrack () {
+        var url = 'sample.mp3';
+        var request = new XMLHttpRequest();
+        request.open('GET', url, true);
+        request.responseType = 'arraybuffer';
+        // Decode asynchronously
+        request.onload = function() {
+          var bufferSource = audioCtx.createBufferSource();
+          bufferSource.loop = true;
+          audioCtx.decodeAudioData(request.response, function (buffer) { 
+            window.trackBuffer = buffer;
+            databender.render(window.trackBuffer).then(function (buffer) { 
+               bufferSource.buffer = buffer;
+               bufferSource.connect(audioCtx.destination);
+               if (databender.effects.playAudio) {
+                 bufferSource.start(0);
+               }
+               window.prevBufferSource = bufferSource; 
+            });
+          });
+        };
+        request.send();
+      }
+
+      function init () {
         hasGUI = false;
+        loadTrack();
         audioCtx = new AudioContext();
         var upload = document.querySelector('.upload');
         var fileUpload = document.querySelector('input[type=file]');
