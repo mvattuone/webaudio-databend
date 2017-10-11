@@ -17,6 +17,14 @@
     "level": 1,
     "impulse": "CathedralRoom.wav" 
   },
+  "chorus": {
+    "active": false,
+    "feedback": 0.4,
+    "delay": 0.0045,
+    "depth": 0.7,
+    "rate": 1.5,
+    "bypass": 0
+  },
   "biquad": {
     "active": false,
     "areaOfEffect": 1,
