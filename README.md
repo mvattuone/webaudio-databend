@@ -1,3 +1,5 @@
-A library that will help you create images affected by audio signal processing.
+A real-time demonstration of databending, using the magic of typed arrays to pass data between the Canvas and the Web Audio API.
+Works on jpg, png, and bmp images and mp4 or webm video, currently. More to come!
 
-Still somewhat in progress but you could probably follow the example and try it out if you'd like. 
+Databending is the _process_ of manipulating data in unintended ways to achieve unpredictable results.
+
