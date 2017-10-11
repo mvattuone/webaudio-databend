@@ -1,4 +1,5 @@
     var Tuna = require('tunajs'); 
+    window.random = require('random-js')();
     var effects = require('./effects.json');
 
     // Create a Databender instance
@@ -46,19 +47,14 @@
             var noEffects = false;
             if (effects.detune.randomize) {
               var waveArray = new Float32Array(effects.detune.randomValues);
-              var denominators = [1, 10, 100, 1000];
               for (i=0;i<effects.detune.randomValues;i++) {
-                var numerator = Math.floor((effects.detune.value * Math.random()) + 1); 
-                var denominator = denominators[Math.floor(Math.random() * 3)];
-                var random = (numerator / denominator); 
-                console.log(random);
-                waveArray[i] = random;  
+                waveArray[i] = window.random.real(0.0001, 400); 
               }
             }
             if (effects.detune.randomize) {
               bufferSource.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
             } else if (effects.detune.enablePartial) {
-              bufferSource.detune.setTargetAtTime(effects.detune.value, 0, effects.detune.areaOfEffect);
+              bufferSource.detune.setTargetAtTime(effects.detune.value, effects.detune.areaOfEffect, effects.detune.areaOfEffect);
             } else {
               bufferSource.detune.value = effects.detune.value;
             };
@@ -71,15 +67,14 @@
             if (effects.playbackRate.randomize) {
               var waveArray = new Float32Array(effects.playbackRate.randomValues);
               for (i=0;i<effects.playbackRate.randomValues;i++) {
-                var random = Math.floor((effects.playbackRate.value * Math.random()) + 1); 
-                waveArray[i] = random;  
+                waveArray[i] = window.random.integer(0.0001, 8); 
               }
             }
             if (effects.playbackRate.randomize) {
               bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
             } else if (effects.playbackRate.enablePartial) {
               
-              bufferSource.playbackRate.setTargetAtTime(effects.playbackRate.value, 0, effects.playbackRate.areaOfEffect);
+              bufferSource.playbackRate.setTargetAtTime(effects.playbackRate.value, effects.playbackRate.areaOfEffect, effects.playbackRate.areaOfEffect);
             } else {
               bufferSource.playbackRate.value = effects.playbackRate.value;
             };
@@ -120,12 +115,8 @@
             var noEffects = false;
             if (effects.biquad.randomize) {
               var waveArray = new Float32Array(effects.biquad.randomValues);
-              var denominators = [10, 100, 1000];
               for (i=0;i<effects.biquad.randomValues;i++) {
-                var numerator = Math.floor((effects.biquad.biquadFrequency * Math.random()) + 1); 
-                var denominator = denominators[Math.floor(Math.random() * 2)];
-                var random = (numerator / denominator); 
-                waveArray[i] = random;  
+                waveArray[i] = window.random.real(0.0001, effects.biquad.biquadFrequency); 
               }
             }
             var biquadFilter = offlineAudioCtx.createBiquadFilter();
@@ -134,7 +125,7 @@
               biquadFilter.frequency.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
               biquadFilter.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
             } else if (effects.biquad.enablePartial) {
-              biquadFilter.frequency.setTargetAtTime(effects.biquad.biquadFrequency, 0, effects.biquad.areaOfEffect);
+              biquadFilter.frequency.setTargetAtTime(effects.biquad.biquadFrequency, effects.biquad.areaOfEffect, effects.biquad.areaOfEffect);
             } else {
               biquadFilter.frequency.value = effects.biquad.biquadFrequency;
             };

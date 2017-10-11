@@ -26,7 +26,7 @@ function handleDatGUI(databender){
           .name("Enable " + effect)
           .onFinishChange(function () { 
             databender.bend(imageData).then(function (buffer) { 
-              databender.draw(buffer, context); 
+              databender.draw(buffer, window.context); 
             });
             if (databender.effects.playAudio) {
               var bufferSource = audioCtx.createBufferSource();
@@ -46,7 +46,7 @@ function handleDatGUI(databender){
           gui.add(databender.effects[effect], param)            
           .onFinishChange(function () { 
             databender.bend(imageData).then(function (buffer) { 
-              databender.draw(buffer, context); 
+              databender.draw(buffer, window.context); 
             });
             if (databender.effects.playAudio) {
               var bufferSource = audioCtx.createBufferSource();
@@ -75,7 +75,7 @@ function renderVideoToCanvas(v,c,w,h) {
   function drawFrame(v,c,w,h) {
     if(v.paused || v.ended) return false;
     c.drawImage(v,0,0,w,h);
-    var imageData = c.getImageData(0,0,w,h);
+    window.imageData = c.getImageData(0,0,w,h);
     var databent = databender.bend(imageData).then(function(renderedBuffer) {
       databender.draw(renderedBuffer, c);
     });
@@ -97,7 +97,7 @@ function handleImageUpload (e) {
   reader.onload = function (e) {
     var img = new Image();
     img.onload = function () {
-      context.drawImage(img, 0, 0, canvas.width, canvas.height);
+      window.context.drawImage(img, 0, 0, canvas.width, canvas.height);
       window.imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       databender.bend(imageData).then(function (buffer) { 
         databender.draw(buffer, context); 
