@@ -20,49 +20,27 @@ function handleDatGUI(databender){
         }
       });
     } else {
+      var effectTab = gui.addFolder(effect);
       Object.keys(databender.effects[effect]).forEach(function (param) {
-        if (param === 'active') {
-          gui.add(databender.effects[effect], param)
-          .name("Enable " + effect)
-          .onFinishChange(function () { 
-            databender.bend(imageData).then(function (buffer) { 
-              databender.draw(buffer, window.context); 
-            });
-            if (databender.effects.playAudio) {
-              var bufferSource = audioCtx.createBufferSource();
-              bufferSource.loop = true;
-              databender.render(window.trackBuffer).then(function (buffer) { 
-                if (window.prevBufferSource) {
-                  window.prevBufferSource.stop();
-                }
-                bufferSource.buffer = buffer;
-                bufferSource.connect(audioCtx.destination);
-                bufferSource.start(audioCtx.currentTime);
-                window.prevBufferSource = bufferSource;
-              });
-            }
+        effectTab.add(databender.effects[effect], param)            
+        .onFinishChange(function () { 
+          databender.bend(imageData).then(function (buffer) { 
+            databender.draw(buffer, window.context); 
           });
-        } else {
-          gui.add(databender.effects[effect], param)            
-          .onFinishChange(function () { 
-            databender.bend(imageData).then(function (buffer) { 
-              databender.draw(buffer, window.context); 
+          if (databender.effects.playAudio) {
+            var bufferSource = audioCtx.createBufferSource();
+            bufferSource.loop = true;
+            databender.render(window.trackBuffer).then(function (buffer) { 
+              if (window.prevBufferSource) {
+                window.prevBufferSource.stop();
+              }
+              bufferSource.buffer = buffer;
+              bufferSource.connect(audioCtx.destination);
+              bufferSource.start(audioCtx.currentTime);
+              window.prevBufferSource = bufferSource;
             });
-            if (databender.effects.playAudio) {
-              var bufferSource = audioCtx.createBufferSource();
-              bufferSource.loop = true;
-              databender.render(window.trackBuffer).then(function (buffer) { 
-                if (window.prevBufferSource) {
-                  window.prevBufferSource.stop();
-                }
-                bufferSource.buffer = buffer;
-                bufferSource.connect(audioCtx.destination);
-                bufferSource.start(audioCtx.currentTime);
-                window.prevBufferSource = bufferSource;
-              });
-            }
-          });
-        }
+          }
+        });
       });
     }
   });
