@@ -13,6 +13,7 @@ function handleDatGUI(databender){
             window.prevBufferSource.stop();
             bufferSource.buffer = buffer;
             bufferSource.connect(audioCtx.destination);
+            bufferSource.start(audioCtx.currentTime);
             window.prevBufferSource = bufferSource;
           });
         } else {
@@ -23,11 +24,11 @@ function handleDatGUI(databender){
       var effectTab = gui.addFolder(effect);
       Object.keys(databender.effects[effect]).forEach(function (param) {
         effectTab.add(databender.effects[effect], param)            
-        .onFinishChange(function () { 
+        .onFinishChange(function (value) { 
           databender.bend(imageData).then(function (buffer) { 
             databender.draw(buffer, window.context); 
           });
-          if (databender.effects.playAudio) {
+          if (databender.effects.playAudio && (param === 'active' || (param !== 'active' && value))) {
             var bufferSource = audioCtx.createBufferSource();
             bufferSource.loop = true;
             databender.render(window.trackBuffer).then(function (buffer) { 
@@ -36,6 +37,7 @@ function handleDatGUI(databender){
               }
               bufferSource.buffer = buffer;
               bufferSource.connect(audioCtx.destination);
+              console.log(audioCtx.currentTime);
               bufferSource.start(audioCtx.currentTime);
               window.prevBufferSource = bufferSource;
             });
@@ -69,8 +71,8 @@ function renderVideoToCanvas(v,c,w,h) {
 function handleImageUpload (e) {
   var reader = new FileReader();
   var canvas = document.createElement('canvas');
-  canvas.width = 400;
-  canvas.height = 400;
+  canvas.width = 1280;
+  canvas.height = 768;
   window.context = canvas.getContext('2d');
   reader.onload = function (e) {
     var img = new Image();

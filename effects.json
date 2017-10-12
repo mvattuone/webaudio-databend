@@ -4,7 +4,7 @@
   "sampleRate": 44100,
   "bitcrusher": {
     "active": false,
-    "bits": 16,
+    "bits": 4,
     "normfreq": 0.1,
     "bufferSize": 4096
   },
