@@ -41,7 +41,7 @@
         reader.onload = function(event){
             var img = new Image();
             img.onload = function(){
-              databent = new Databender(img);
+              databent = new Databender.Databender(img);
               var gui = new dat.GUI();
               Object.keys(databent.effects).forEach(function (effect) {
                 Object.keys(databent.effects[effect]).forEach(function (param) {
