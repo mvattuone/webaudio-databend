@@ -1,13 +1,14 @@
 const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
-  entry: './databend.js',
+  entry: './src/index.js',
   output: {
-    filename: 'databend.js',
+    filename: 'app.js',
     path: path.resolve(__dirname, 'dist'),
     library: 'Databender', 
     libraryTarget: 'umd',
-    umdNamedDefine: true
+    umdNamedDefine: true,
   },
   module: {
     rules: [{
@@ -16,14 +17,17 @@ module.exports = {
       use: {
         loader: 'babel-loader',
         options: {
-          presets: ['env']
-        }
-      }
+          presets: ['env'],
+        },
+      },
     }]
   },
-  resolve: {
-    alias: {
-      "module": "Databender"
-    },
-  }
+  devServer: {
+    port: 3000,
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './src/index.html'
+    }),
+  ],
 }
