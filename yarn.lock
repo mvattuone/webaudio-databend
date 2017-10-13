@@ -344,6 +344,12 @@ babel-messages@^6.23.0:
   dependencies:
     babel-runtime "^6.22.0"
 
+babel-package-import@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/babel-package-import/-/babel-package-import-1.0.6.tgz#d174adaf92f8ef99d265043528a61ae555425551"
+  dependencies:
+    shortid "^2.2.4"
+
 babel-plugin-check-es2015-constants@^6.22.0:
   version "6.22.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-check-es2015-constants/-/babel-plugin-check-es2015-constants-6.22.0.tgz#35157b101426fd2ffd3da3f75c7d1e91835bbf8a"
@@ -353,6 +359,10 @@ babel-plugin-check-es2015-constants@^6.22.0:
 babel-plugin-syntax-async-functions@^6.8.0:
   version "6.13.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-syntax-async-functions/-/babel-plugin-syntax-async-functions-6.13.0.tgz#cad9cad1191b5ad634bf30ae0872391e0647be95"
+
+babel-plugin-syntax-dynamic-import@^6.18.0:
+  version "6.18.0"
+  resolved "https://registry.yarnpkg.com/babel-plugin-syntax-dynamic-import/-/babel-plugin-syntax-dynamic-import-6.18.0.tgz#8d6a26229c83745a9982a441051572caa179b1da"
 
 babel-plugin-syntax-exponentiation-operator@^6.8.0:
   version "6.13.0"
@@ -3190,6 +3200,10 @@ shebang-command@^1.2.0:
 shebang-regex@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/shebang-regex/-/shebang-regex-1.0.0.tgz#da42f49740c0b42db2ca9728571cb190c98efea3"
+
+shortid@^2.2.4:
+  version "2.2.8"
+  resolved "https://registry.yarnpkg.com/shortid/-/shortid-2.2.8.tgz#033b117d6a2e975804f6f0969dbe7d3d0b355131"
 
 signal-exit@^3.0.0:
   version "3.0.2"
