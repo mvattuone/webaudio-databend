@@ -4,14 +4,20 @@ import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/mergeMap'
 import 'rxjs/add/operator/take'
 
-import { loadImage, render, bender } from './lib'
+import {
+  setState,
+  changes,
+  loadImage,
+  render,
+  bender
+} from './lib'
 
 const init = () => {
   const canvas = document.createElement('canvas')
   document.querySelector('body').appendChild(canvas)
 
   const filePicker = document.querySelector('[type="file"]')
-  Observable
+  const obs = Observable
     .fromEvent(filePicker, 'change')
     .map(event => event.target.files[0])
     .mergeMap(file => loadImage(file))

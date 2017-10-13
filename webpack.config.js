@@ -9,11 +9,20 @@ module.exports = {
     library: 'Databender', 
   },
   module: {
-    rules: [{
-      test: /\.js$/,
-      exclude: /(node_modules|bower_components)/,
-      loader: 'babel-loader'
-    }]
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /(node_modules|bower_components)/,
+        loader: 'babel-loader'
+      },
+      {
+        test: /\.html$/,
+        loaders: [
+          'babel-loader',
+          'polymer-webpack-loader',
+        ],
+      },
+    ],
   },
   devServer: {
     port: 3000,
