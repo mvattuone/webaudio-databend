@@ -3,7 +3,17 @@ const path = require('path')
 const app = express()
 
 app.get('/', (req, res) => {
-  const index = path.resolve('./index.html')
+  const index = path.resolve('./demo/index.html')
+  res.sendFile(index)
+})
+
+app.get('/index.js', (req, res) => {
+  const index = path.resolve('./demo/index.js')
+  res.sendFile(index)
+})
+
+app.get('/sample.mp3', (req, res) => {
+  const index = path.resolve('./demo/sample.mp3')
   res.sendFile(index)
 })
 
