@@ -27,7 +27,7 @@ export const config = {
     impulse: "CathedralRoom.wav"
   },
   gain: {
-    value: 1
+    value: 0.9
   },
   detune: {
     value: 0
@@ -36,8 +36,8 @@ export const config = {
     value: 1
   },
   pingPong: {
-    feedback: 0.3,
-    wetLevel: 0.5,
+    feedback: 0.4,
+    wetLevel: 0.75,
     delayTimeLeft: 10,
     delayTimeRight: 10
   },

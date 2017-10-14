@@ -12,7 +12,7 @@ export const gain = (offlineAudioCtx, bufferSource, config) => {
   const tuna = new Tuna(offlineAudioCtx)
 
   const gain = offlineAudioCtx.createGain()
-  gain.gain.value = config.gain
+  gain.gain.value = config.value
   bufferSource.connect(gain)
 
   return Observable.of(gain)

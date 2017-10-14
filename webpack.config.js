@@ -15,13 +15,13 @@ module.exports = {
         exclude: /(node_modules|bower_components)/,
         loader: 'babel-loader'
       },
-      {
-        test: /\.html$/,
-        loaders: [
-          'babel-loader',
-          'polymer-webpack-loader',
-        ],
-      },
+      // {
+      //   test: /\.html$/,
+      //   loaders: [
+      //     'babel-loader',
+      //     'polymer-webpack-loader',
+      //   ],
+      // },
     ],
   },
   devServer: {

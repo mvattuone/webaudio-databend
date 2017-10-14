@@ -6,6 +6,8 @@ import 'rxjs/add/operator/catch'
 import 'rxjs/add/operator/do'
 import 'rxjs/add/operator/map'
 
+import { pingPong, gain, config } from './effects'
+
 const createAudioBuffer = (imageBuffer) => {
   const audioContext = new AudioContext()
   const audioBuffer = audioContext.createBuffer(1, imageBuffer.data.length, 44100)
@@ -46,7 +48,8 @@ const complete = (offlineAudioContext) => new Promise((resolve, reject) => {
 
 const applyEffects = (offlineAudioContext, bufferSource) => {
   const userEffects = [
-    (bufferSrc) => phaser(offlineAudioContext, bufferSrc, config.phaser),
+    (bufferSrc) => pingPong(offlineAudioContext, bufferSrc, config.pingPong),
+    (bufferSrc) => gain(offlineAudioContext, bufferSrc, config.gain),
   ]
 
   const buffer$ = Observable.of(bufferSource)
