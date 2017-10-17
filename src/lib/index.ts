@@ -1,3 +1,4 @@
+export * from './dom'
 export * from './state'
 export * from './load-image'
 export * from './bender'

@@ -12,7 +12,7 @@ let localState = {}
 const loadStore = () => Observable
   .from(localStorage.getItem(storageKey))
   .filter(Boolean)
-  .map(JSON.parse)
+  .map(data => JSON.parse(data))
   .do(state => localState = Object.assign({}, state))
   .subscribe(state => store.next(state))
 

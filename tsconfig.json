@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "baseUrl": "./src",
+    "experimentalDecorators": true,
+    "lib": [
+      "dom",
+      "es6"
+    ],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "typeRoots": [
+      "node_modules/@types",
+      "src/typings"
+    ],
+    "target": "es5"
+  },
+  "files": [
+    "./src/index.ts"
+  ]
+}

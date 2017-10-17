@@ -2,26 +2,22 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
-  entry: './src/index.js',
+  entry: './src/index.ts',
   output: {
     filename: 'app.js',
     path: path.resolve(__dirname, 'dist'),
-    library: 'Databender', 
   },
   module: {
     rules: [
       {
-        test: /\.js$/,
-        exclude: /(node_modules|bower_components)/,
-        loader: 'babel-loader'
+        test: /\.ts$/,
+        exclude: /node_modules/,
+        loader: 'awesome-typescript-loader'
       },
-      // {
-      //   test: /\.html$/,
-      //   loaders: [
-      //     'babel-loader',
-      //     'polymer-webpack-loader',
-      //   ],
-      // },
+      {
+        test: /\.html$/,
+        loaders: 'html-loader'
+      },
     ],
   },
   devServer: {
@@ -29,7 +25,14 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: './src/index.html'
+      template: path.resolve(__dirname, 'src/index.html')
     }),
   ],
+  resolve: {
+    extensions: ['.ts', '.js'],
+    alias: {
+      polymer$: path.resolve(__dirname,'node_modules/@polymer/polymer/polymer.js'),
+      polymerElement$: path.resolve(__dirname,'node_modules/@polymer/polymer/polymer-element.js')
+    },
+  },
 }

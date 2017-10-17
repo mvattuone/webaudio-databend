@@ -10,10 +10,10 @@ import 'rxjs/add/observable/of'
 
 import Tuna from 'tunajs'
 
-export const bitcrusher = (offlineAudioCtx, bufferSource, config) => {
+export const bitcrusher = (offlineAudioCtx: OfflineAudioContext, bufferSource: AudioBufferSourceNode, config: { [key: string]: any }) => {
   const tuna = new Tuna(offlineAudioCtx)
   
-  const bitcrusher = new tuna.Bitcrusher(config)
+  const bitcrusher: AudioBufferSourceNode = new tuna.Bitcrusher(config)
   bufferSource.connect(bitcrusher)
 
   return Observable.of(bitcrusher)

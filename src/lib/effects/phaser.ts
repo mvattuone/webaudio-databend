@@ -12,10 +12,10 @@ import 'rxjs/add/observable/of'
 
 import Tuna from 'tunajs'
 
-export const phaser = (offlineAudioCtx, bufferSource, config) => {
+export const phaser = (offlineAudioCtx: OfflineAudioContext, bufferSource: AudioBufferSourceNode, config: { [key: string]: any }) => {
   const tuna = new Tuna(offlineAudioCtx)
 
-  const phaser = new tuna.Phaser(config)
+  const phaser: AudioBufferSourceNode = new tuna.Phaser(config)
   bufferSource.connect(phaser)
 
   return Observable.of(phaser)
