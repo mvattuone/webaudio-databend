@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-  entry: './databend.js',
+  entry: './src/databend.js',
   output: {
     filename: 'databend.js',
     path: path.resolve(__dirname, 'dist'),
