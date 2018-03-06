@@ -79,11 +79,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
     var Tuna = __webpack_require__(1); 
     window.random = __webpack_require__(2)();
-    var effects = __webpack_require__(3);
+    var config = __webpack_require__(3);
 
     // Create a Databender instance
     module.exports = function (audioCtx, channels) {
-      this.effects = effects;
+      this.config = config;
 
       // Create an AudioContext or use existing one
       this.audioCtx = audioCtx ? audioCtx : new AudioContext();
@@ -95,7 +95,7 @@ return /******/ (function(modules) { // webpackBootstrap
         var bufferSize = imageData.data.length / this.channels;
 
         // Make an audioBuffer on the audioContext to pass to the offlineAudioCtx AudioBufferSourceNode
-        var audioBuffer = this.audioCtx.createBuffer(this.channels, bufferSize, databender.effects.sampleRate); 
+        var audioBuffer = this.audioCtx.createBuffer(this.channels, bufferSize, this.config.sampleRate); 
 
         // This gives us the actual ArrayBuffer that contains the data
         var nowBuffering = audioBuffer.getChannelData(0);
@@ -110,7 +110,7 @@ return /******/ (function(modules) { // webpackBootstrap
       this.render = function (buffer) {
         return new Promise(function (resolve, reject) {
           var _this = this;
-          var effects = this.databender.effects;
+          var config = this.databender.config;
 
           // Create offlineAudioCtx that will house our rendered buffer
           var offlineAudioCtx = new OfflineAudioContext(this.databender.channels, buffer.length, this.audioCtx.sampleRate);
@@ -122,40 +122,40 @@ return /******/ (function(modules) { // webpackBootstrap
           bufferSource.buffer = buffer; 
 
           // Seems to rotate the image, clockwise if postitive ccw if negative
-          if (effects.detune.active) {
+          if (config.detune.active) {
             var noEffects = false;
-            if (effects.detune.randomize) {
-              var waveArray = new Float32Array(effects.detune.randomValues);
-              for (i=0;i<effects.detune.randomValues;i++) {
+            if (config.detune.randomize) {
+              var waveArray = new Float32Array(config.detune.randomValues);
+              for (i=0;i<config.detune.randomValues;i++) {
                 waveArray[i] = window.random.real(0.0001, 400); 
               }
             }
-            if (effects.detune.randomize) {
+            if (config.detune.randomize) {
               bufferSource.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-            } else if (effects.detune.enablePartial) {
-              bufferSource.detune.setTargetAtTime(effects.detune.value, effects.detune.areaOfEffect, effects.detune.areaOfEffect);
+            } else if (config.detune.enablePartial) {
+              bufferSource.detune.setTargetAtTime(config.detune.value, config.detune.areaOfEffect, config.detune.areaOfEffect);
             } else {
-              bufferSource.detune.value = effects.detune.value;
+              bufferSource.detune.value = config.detune.value;
             };
           }
 
           // Seems to "play back" the image at a rate equal to the number
           // (i.e. 4 yields 4 smaller rendered images)
-          if (effects.playbackRate.active) {
+          if (config.playbackRate.active) {
             var noEffects = false;
-            if (effects.playbackRate.randomize) {
-              var waveArray = new Float32Array(effects.playbackRate.randomValues);
-              for (i=0;i<effects.playbackRate.randomValues;i++) {
+            if (config.playbackRate.randomize) {
+              var waveArray = new Float32Array(config.playbackRate.randomValues);
+              for (i=0;i<config.playbackRate.randomValues;i++) {
                 waveArray[i] = window.random.integer(0.0001, 8); 
               }
             }
-            if (effects.playbackRate.randomize) {
+            if (config.playbackRate.randomize) {
               bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-            } else if (effects.playbackRate.enablePartial) {
+            } else if (config.playbackRate.enablePartial) {
               
-              bufferSource.playbackRate.setTargetAtTime(effects.playbackRate.value, effects.playbackRate.areaOfEffect, effects.playbackRate.areaOfEffect);
+              bufferSource.playbackRate.setTargetAtTime(config.playbackRate.value, config.playbackRate.areaOfEffect, config.playbackRate.areaOfEffect);
             } else {
-              bufferSource.playbackRate.value = effects.playbackRate.value;
+              bufferSource.playbackRate.value = config.playbackRate.value;
             };
           }
 
@@ -165,114 +165,114 @@ return /******/ (function(modules) { // webpackBootstrap
           var noEffects = true;
           var tuna = new Tuna(offlineAudioCtx);
 
-          if (effects.bitcrusher.active) {
+          if (config.bitcrusher.active) {
             var noEffects = false;
 
             var crusher = new tuna.Bitcrusher({
-                bits: effects.bitcrusher.bits,
-                normfreq: effects.bitcrusher.normfreq,
-                bufferSize: effects.bitcrusher.bufferSize
+                bits: config.bitcrusher.bits,
+                normfreq: config.bitcrusher.normfreq,
+                bufferSize: config.bitcrusher.bufferSize
             });
             bufferSource.connect(crusher);
             crusher.connect(offlineAudioCtx.destination);
           }
 
-          if (effects.chorus.active) {
+          if (config.chorus.active) {
             var noEffects = false;
 
             var chorus = new tuna.Chorus({
-                feedback: effects.chorus.feedback,
-                delay: effects.chorus.delay,
-                depth: effects.chorus.depth,
-                rate: effects.chorus.rate,
+                feedback: config.chorus.feedback,
+                delay: config.chorus.delay,
+                depth: config.chorus.depth,
+                rate: config.chorus.rate,
             });
             bufferSource.connect(chorus);
             chorus.connect(offlineAudioCtx.destination);
           }
 
-          if (effects.biquad.active) {
+          if (config.biquad.active) {
             var noEffects = false;
-            if (effects.biquad.randomize) {
-              var waveArray = new Float32Array(effects.biquad.randomValues);
-              for (i=0;i<effects.biquad.randomValues;i++) {
-                waveArray[i] = window.random.real(0.0001, effects.biquad.biquadFrequency); 
+            if (config.biquad.randomize) {
+              var waveArray = new Float32Array(config.biquad.randomValues);
+              for (i=0;i<config.biquad.randomValues;i++) {
+                waveArray[i] = window.random.real(0.0001, config.biquad.biquadFrequency); 
               }
             }
             var biquadFilter = offlineAudioCtx.createBiquadFilter();
-            biquadFilter.type = effects.biquad.type;
-            if (effects.biquad.randomize) {
+            biquadFilter.type = config.biquad.type;
+            if (config.biquad.randomize) {
               biquadFilter.frequency.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
               biquadFilter.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-            } else if (effects.biquad.enablePartial) {
-              biquadFilter.frequency.setTargetAtTime(effects.biquad.biquadFrequency, effects.biquad.areaOfEffect, effects.biquad.areaOfEffect);
+            } else if (config.biquad.enablePartial) {
+              biquadFilter.frequency.setTargetAtTime(config.biquad.biquadFrequency, config.biquad.areaOfEffect, config.biquad.areaOfEffect);
             } else {
-              biquadFilter.frequency.value = effects.biquad.biquadFrequency;
+              biquadFilter.frequency.value = config.biquad.biquadFrequency;
             };
-            biquadFilter.Q.value = effects.biquad.quality;
-            biquadFilter.detune.value = effects.biquad.detune;
+            biquadFilter.Q.value = config.biquad.quality;
+            biquadFilter.detune.value = config.biquad.detune;
             bufferSource.connect(biquadFilter);
             biquadFilter.connect(offlineAudioCtx.destination);
           }
 
-          if (effects.gain.active) {
+          if (config.gain.active) {
             var noEffects = false;
             var gainNode = offlineAudioCtx.createGain();
             bufferSource.connect(gainNode);
-            gainNode.gain.value = effects.gain.value;
+            gainNode.gain.value = config.gain.value;
             gainNode.connect(offlineAudioCtx.destination);
           }
 
-          if (effects.pingPong.active) {
+          if (config.pingPong.active) {
             var noEffects = false;
 
             var pingPongDelayNode = new tuna.PingPongDelay({
-                wetLevel: effects.pingPong.wetLevel,
-                feedback: effects.pingPong.feedback,
-                delayTimeLeft: effects.pingPong.delayTimeLeft,
-                delayTimeRight: effects.pingPong.delayTimeRight
+                wetLevel: config.pingPong.wetLevel,
+                feedback: config.pingPong.feedback,
+                delayTimeLeft: config.pingPong.delayTimeLeft,
+                delayTimeRight: config.pingPong.delayTimeRight
             });
             bufferSource.connect(pingPongDelayNode);
             pingPongDelayNode.connect(offlineAudioCtx.destination);
           }
 
-          if (effects.phaser.active) {
+          if (config.phaser.active) {
             var noEffects = false;
 
             tuna = new Tuna(offlineAudioCtx);
             var phaser = new tuna.Phaser({
-              rate: effects.phaser.rate,
-              depth: effects.phaser.depth,
-              feedback: effects.phaser.feedback,
-              stereoPhase: effects.phaser.stereoPhase,
-              baseModulationFrequency: effects.phaser.baseModulationFrequency
+              rate: config.phaser.rate,
+              depth: config.phaser.depth,
+              feedback: config.phaser.feedback,
+              stereoPhase: config.phaser.stereoPhase,
+              baseModulationFrequency: config.phaser.baseModulationFrequency
             });
             bufferSource.connect(phaser);
             phaser.connect(offlineAudioCtx.destination);
           }
 
-          if (effects.convolver.active) {
+          if (config.convolver.active) {
             var noEffects = false;
             var convolver = new tuna.Convolver({
-              highCut: effects.convolver.highCut,
-              lowCut: effects.convolver.lowCut,
-              dryLevel: effects.convolver.dryLevel,
-              wetLevel: effects.convolver.wetLevel,
-              level: effects.convolver.level,
-              impulse: effects.convolver.impulse
+              highCut: config.convolver.highCut,
+              lowCut: config.convolver.lowCut,
+              dryLevel: config.convolver.dryLevel,
+              wetLevel: config.convolver.wetLevel,
+              level: config.convolver.level,
+              impulse: config.convolver.impulse
             });
             bufferSource.connect(convolver);
             convolver.connect(offlineAudioCtx.destination);
           }
 
-          if(effects.wahwah.active) {
+          if(config.wahwah.active) {
             var noEffects = false;
             var wahwah = new tuna.WahWah({
-                automode: effects.wahwah.automode,
-                baseFrequency: effects.wahwah.baseFrequency,
-                excursionOctaves: effects.wahwah.excursionOctaves,
-                sweep: effects.wahwah.sweep,
-                resonance: effects.wahwah.resonance,
-                sensitivity: effects.wahwah.sensitivity
+                automode: config.wahwah.automode,
+                baseFrequency: config.wahwah.baseFrequency,
+                excursionOctaves: config.wahwah.excursionOctaves,
+                sweep: config.wahwah.sweep,
+                resonance: config.wahwah.resonance,
+                sensitivity: config.wahwah.sensitivity
             });
             bufferSource.connect(wahwah);
             wahwah.connect(offlineAudioCtx.destination);

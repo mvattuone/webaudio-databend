@@ -1,10 +1,10 @@
 function handleDatGUI(databender){
   var gui = new dat.GUI();
-  Object.keys(databender.effects).forEach(function (effect) {
+  Object.keys(databender.config).forEach(function (effect) {
     if (effect === 'frameRate' || effect === 'sampleRate') { 
-      gui.add(databender.effects, effect)
+      gui.add(databender.config, effect)
     } else if (effect === 'playAudio') {
-      gui.add(databender.effects, effect)
+      gui.add(databender.config, effect)
       .onFinishChange(function (value) {
         if (!value) {
           var bufferSource = audioCtx.createBufferSource();
@@ -22,13 +22,13 @@ function handleDatGUI(databender){
       });
     } else {
       var effectTab = gui.addFolder(effect);
-      Object.keys(databender.effects[effect]).forEach(function (param) {
-        effectTab.add(databender.effects[effect], param)            
+      Object.keys(databender.config[effect]).forEach(function (param) {
+        effectTab.add(databender.config[effect], param)            
         .onFinishChange(function (value) { 
           databender.bend(imageData).then(function (buffer) { 
             databender.draw(buffer, window.context); 
           });
-          if (databender.effects.playAudio && (param === 'active' || (param !== 'active' && value))) {
+          if (databender.config.playAudio && (param === 'active' || (param !== 'active' && value))) {
             var bufferSource = audioCtx.createBufferSource();
             bufferSource.loop = true;
             databender.render(window.trackBuffer).then(function (buffer) { 
@@ -62,7 +62,7 @@ function renderVideoToCanvas(v,c,w,h) {
   }
 
   (function repeat() {
-    time = 1000 / databender.effects.frameRate;  
+    time = 1000 / databender.config.frameRate;  
     drawFrame(v,c,w,h);
     timer = setTimeout(repeat, time);
   }());
@@ -122,7 +122,7 @@ function loadTrack () {
       databender.render(window.trackBuffer).then(function (buffer) { 
         bufferSource.buffer = buffer;
         bufferSource.connect(audioCtx.destination);
-        if (databender.effects.playAudio) {
+        if (databender.config.playAudio) {
           bufferSource.start(0);
         }
         window.prevBufferSource = bufferSource; 
