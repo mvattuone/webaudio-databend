@@ -25,7 +25,7 @@ function handleDatGUI(databender, canvas){
       Object.keys(databender.config[effect]).forEach(function (param) {
         effectTab.add(databender.config[effect], param)            
         .onFinishChange(function (value) { 
-          databender.bend(imageData).then(function (buffer) { 
+          databender.bend(databender.imageData).then(function (buffer) { 
             databender.draw(buffer, canvas); 
           });
           if (databender.config.playAudio && (param === 'active' || (param !== 'active' && value))) {
@@ -48,38 +48,30 @@ function handleDatGUI(databender, canvas){
   });
 };
 
-function renderVideoToCanvas(v,c,w,h,renderCanvas) {
+function renderVideoToCanvas(v, renderCanvas) {
   var timer;
   var time;
 
-  function drawFrame(v,c,w,h, renderCanvas) {
+  function drawFrame(v, renderCanvas) {
     if(v.paused || v.ended) return false;
-    c.drawImage(v,0,0,w,h);
-    window.imageData = c.getImageData(0,0,w,h);
-    var databent = databender.bend(imageData).then(function(renderedBuffer) {
+    var databent = databender.bend(v).then(function(renderedBuffer) {
       databender.draw(renderedBuffer, renderCanvas);
     });
   }
 
   (function repeat() {
     time = 1000 / databender.config.frameRate;  
-    drawFrame(v,c,w,h, renderCanvas);
+    drawFrame(v, renderCanvas);
     timer = setTimeout(repeat, time);
   }());
 }
 
 function handleImageUpload (e, renderCanvas) {
   var reader = new FileReader();
-  var canvas = document.createElement('canvas');
-  canvas.width = 1280;
-  canvas.height = 768;
-  var context = canvas.getContext('2d');
   reader.onload = function (e) {
     var img = new Image();
     img.onload = function () {
-      context.drawImage(img, 0, 0, canvas.width, canvas.height);
-      window.imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      databender.bend(imageData).then(function (buffer) { 
+      databender.bend(img).then(function (buffer) { 
         databender.draw(buffer, renderCanvas); 
       });
     };
@@ -90,14 +82,10 @@ function handleImageUpload (e, renderCanvas) {
 
 function handleVideoUpload(e, renderCanvas){
   var reader = new FileReader();
-  var canvas = document.createElement('canvas');
-  canvas.width = 1280;
-  canvas.height = 768;
-  var context = canvas.getContext('2d');
   var video = document.createElement('video');
 
   video.addEventListener('play', function () {
-    renderVideoToCanvas(this, context, canvas.width, canvas.height, renderCanvas);
+    renderVideoToCanvas(this, renderCanvas);
   }, false);
 
   reader.onload = function (event) {
