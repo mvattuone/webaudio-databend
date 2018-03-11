@@ -155,15 +155,10 @@ function handleFileUpload(file, renderCanvas) {
   }
 };
 
-
-
-function init () {
-  hasGUI = false;
+function main () {
   loadTrack();
   audioCtx = new AudioContext();
   var renderCanvas = document.querySelector('#canvas');
-  renderCanvas.width = 1280;
-  renderCanvas.height = 768;
   var upload = document.querySelector('.upload');
   var fileUpload = document.querySelector('input[type=file]');
   upload.ondragover = function () { this.classList.add('hover'); return false; };
@@ -178,4 +173,4 @@ function init () {
   handleDatGUI(databender, renderCanvas);
 };
 
-init();
+main();
