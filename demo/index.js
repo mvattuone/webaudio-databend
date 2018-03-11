@@ -1,4 +1,4 @@
-function handleDatGUI(databender){
+function handleDatGUI(databender, canvas){
   var gui = new dat.GUI();
   Object.keys(databender.config).forEach(function (effect) {
     if (effect === 'frameRate' || effect === 'sampleRate') { 
@@ -26,7 +26,7 @@ function handleDatGUI(databender){
         effectTab.add(databender.config[effect], param)            
         .onFinishChange(function (value) { 
           databender.bend(imageData).then(function (buffer) { 
-            databender.draw(buffer, window.context); 
+            databender.draw(buffer, canvas); 
           });
           if (databender.config.playAudio && (param === 'active' || (param !== 'active' && value))) {
             var bufferSource = audioCtx.createBufferSource();
@@ -48,39 +48,39 @@ function handleDatGUI(databender){
   });
 };
 
-function renderVideoToCanvas(v,c,w,h) {
+function renderVideoToCanvas(v,c,w,h,renderCanvas) {
   var timer;
   var time;
 
-  function drawFrame(v,c,w,h) {
+  function drawFrame(v,c,w,h, renderCanvas) {
     if(v.paused || v.ended) return false;
     c.drawImage(v,0,0,w,h);
     window.imageData = c.getImageData(0,0,w,h);
     var databent = databender.bend(imageData).then(function(renderedBuffer) {
-      databender.draw(renderedBuffer, c);
+      databender.draw(renderedBuffer, renderCanvas);
     });
   }
 
   (function repeat() {
     time = 1000 / databender.config.frameRate;  
-    drawFrame(v,c,w,h);
+    drawFrame(v,c,w,h, renderCanvas);
     timer = setTimeout(repeat, time);
   }());
 }
 
-function handleImageUpload (e) {
+function handleImageUpload (e, renderCanvas) {
   var reader = new FileReader();
   var canvas = document.createElement('canvas');
   canvas.width = 1280;
   canvas.height = 768;
-  window.context = canvas.getContext('2d');
+  var context = canvas.getContext('2d');
   reader.onload = function (e) {
     var img = new Image();
     img.onload = function () {
-      window.context.drawImage(img, 0, 0, canvas.width, canvas.height);
+      context.drawImage(img, 0, 0, canvas.width, canvas.height);
       window.imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       databender.bend(imageData).then(function (buffer) { 
-        databender.draw(buffer, context); 
+        databender.draw(buffer, renderCanvas); 
       });
     };
     img.src = e.target.result;
@@ -88,14 +88,16 @@ function handleImageUpload (e) {
   reader.readAsDataURL(e);
 }; 
 
-function handleVideoUpload(e){
+function handleVideoUpload(e, renderCanvas){
   var reader = new FileReader();
   var canvas = document.createElement('canvas');
+  canvas.width = 1280;
+  canvas.height = 768;
   var context = canvas.getContext('2d');
   var video = document.createElement('video');
 
   video.addEventListener('play', function () {
-    renderVideoToCanvas(this, context, canvas.width, canvas.height);
+    renderVideoToCanvas(this, context, canvas.width, canvas.height, renderCanvas);
   }, false);
 
   reader.onload = function (event) {
@@ -152,13 +154,13 @@ function getFileType(file) {
 };
 
 
-function handleFileUpload(file) {
+function handleFileUpload(file, renderCanvas) {
   var type = getFileType(file);
   switch (type) { 
     case 'image': 
-      return handleImageUpload(file);
+      return handleImageUpload(file, renderCanvas);
     case 'video':
-      return handleVideoUpload(file);
+      return handleVideoUpload(file, renderCanvas);
     default:
       alert('File Type is not supported');
       return false;
@@ -171,6 +173,9 @@ function init () {
   hasGUI = false;
   loadTrack();
   audioCtx = new AudioContext();
+  var renderCanvas = document.querySelector('#canvas');
+  renderCanvas.width = 1280;
+  renderCanvas.height = 768;
   var upload = document.querySelector('.upload');
   var fileUpload = document.querySelector('input[type=file]');
   upload.ondragover = function () { this.classList.add('hover'); return false; };
@@ -179,10 +184,10 @@ function init () {
     e.preventDefault();
     document.querySelector('.upload').style.display = 'none';
     var files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
-    handleFileUpload(files[0]);
+    handleFileUpload(files[0], renderCanvas);
   }
   databender = new Databender(audioCtx);
-  handleDatGUI(databender);
+  handleDatGUI(databender, renderCanvas);
 };
 
 init();

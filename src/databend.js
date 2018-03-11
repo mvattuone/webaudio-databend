@@ -29,12 +29,12 @@
       }
 
       this.render = function (buffer) {
+        var _this = this;
         return new Promise(function (resolve, reject) {
-          var _this = this;
           var config = this.databender.config;
 
           // Create offlineAudioCtx that will house our rendered buffer
-          var offlineAudioCtx = new OfflineAudioContext(this.databender.channels, buffer.length, this.audioCtx.sampleRate);
+          var offlineAudioCtx = new OfflineAudioContext(_this.channels, buffer.length * _this.channels, this.audioCtx.sampleRate);
 
           // Create an AudioBufferSourceNode, which represents an audio source consisting of in-memory audio data
           var bufferSource = offlineAudioCtx.createBufferSource();
@@ -212,7 +212,7 @@
         });
       };
 
-      this.draw = function (buffer) {
+      this.draw = function (buffer, canvas) {
 
         // Get buffer data
         var bufferData = buffer.getChannelData(0);
@@ -228,14 +228,7 @@
         // @see https://developer.mozilla.org/en-US/docs/Web/API/ImageData
         var transformedImage = new ImageData(clampedDataArray, this.imageData.width, this.imageData.height);
 
-        if (!document.querySelector('canvas')) {
-          var canvas = document.createElement('canvas');
-          canvas.width = this.imageData.width;
-          canvas.height = this.imageData.height;
-          document.body.prepend(canvas);
-        }
-
-        document.querySelector('canvas').getContext('2d').putImageData(transformedImage, 0, 0);
+        canvas.getContext('2d').putImageData(transformedImage, 0, 0);
       };
 
 

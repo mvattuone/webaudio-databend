@@ -4,10 +4,6 @@
     <meta charset="utf-8">
     <title>Webaudio Databending</title>
     <style>
-      canvas {
-        width: 100vw; 
-        height: 100vh;
-      }
 
       .upload {
         border: 1px solid #000;
@@ -34,6 +30,7 @@
     <div class="upload">
       <p>Drop video or image here to databend</p>
     </div>
+    <canvas id="canvas"></canvas>
     <label><input type="file" /> Or upload a file</label>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.5/dat.gui.js"></script>
     <script src="../dist/databend.js"></script>
