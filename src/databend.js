@@ -3,13 +3,14 @@
     var config = require('./config.json');
 
     // Create a Databender instance
-    module.exports = function (audioCtx, channels) {
+    module.exports = function (audioCtx, renderCanvas) {
       this.config = config;
 
       // Create an AudioContext or use existing one
       this.audioCtx = audioCtx ? audioCtx : new AudioContext();
+      this.renderCanvas = renderCanvas;
       
-      this.channels = channels ? channels : 1;
+      this.channels = 1; // @TODO: What would multiple channels look like? 
 
       this.bend = function (image) {
         if (image instanceof Image || image instanceof HTMLVideoElement) {
@@ -33,7 +34,7 @@
         // v. convenient becuase you do not need to convert the data yourself
         nowBuffering.set(this.imageData.data);
 
-        return this.render(audioBuffer);
+        return Promise.resolve(audioBuffer);
       }
 
       this.render = function (buffer) {
@@ -220,7 +221,7 @@
         });
       };
 
-      this.draw = function (buffer, canvas) {
+      this.draw = function (buffer) {
 
         // Get buffer data
         var bufferData = buffer.getChannelData(0);
@@ -236,7 +237,7 @@
         // @see https://developer.mozilla.org/en-US/docs/Web/API/ImageData
         var transformedImage = new ImageData(clampedDataArray, this.imageData.width, this.imageData.height);
 
-        canvas.getContext('2d').putImageData(transformedImage, 0, 0);
+        renderCanvas.getContext('2d').putImageData(transformedImage, 0, 0);
       };
 
 

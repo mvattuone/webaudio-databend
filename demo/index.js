@@ -5,46 +5,46 @@ function handleDatGUI(databender, canvas){
       gui.add(databender.config, effect)
     } else if (effect === 'playAudio') {
       gui.add(databender.config, effect)
-      .onFinishChange(function (value) {
-        if (!value) {
+        .onFinishChange(function (value) {
+          if (!value) {
+            var bufferSource = audioCtx.createBufferSource();
+            bufferSource.loop = true;
+            databender.render(window.trackBuffer).then(function (buffer) { 
+              window.prevBufferSource.stop();
+              bufferSource.buffer = buffer;
+              bufferSource.connect(audioCtx.destination);
+              bufferSource.start(audioCtx.currentTime);
+              window.prevBufferSource = bufferSource;
+            });
+          } else {
+            window.prevBufferSource.start(audioCtx.currentTime);
+          }
+        });
+    } else {
+      var effectTab = gui.addFolder(effect);
+      Object.keys(databender.config[effect]).forEach(function (param) {
+        effectTab.add(databender.config[effect], param)            
+          .onFinishChange(function (value) { 
+            databender.bend(databender.imageData)
+              .then(databender.render.bind(databender))
+              .then(databender.draw.bind(databender))
+          });
+
+        if (databender.config.playAudio && (param === 'active' || (param !== 'active' && value))) {
           var bufferSource = audioCtx.createBufferSource();
           bufferSource.loop = true;
           databender.render(window.trackBuffer).then(function (buffer) { 
-            window.prevBufferSource.stop();
+            if (window.prevBufferSource) {
+              window.prevBufferSource.stop();
+            }
             bufferSource.buffer = buffer;
             bufferSource.connect(audioCtx.destination);
             bufferSource.start(audioCtx.currentTime);
             window.prevBufferSource = bufferSource;
           });
-        } else {
-          window.prevBufferSource.start(audioCtx.currentTime);
         }
       });
-    } else {
-      var effectTab = gui.addFolder(effect);
-      Object.keys(databender.config[effect]).forEach(function (param) {
-        effectTab.add(databender.config[effect], param)            
-        .onFinishChange(function (value) { 
-          databender.bend(databender.imageData).then(function (buffer) { 
-            databender.draw(buffer, canvas); 
-          });
-          if (databender.config.playAudio && (param === 'active' || (param !== 'active' && value))) {
-            var bufferSource = audioCtx.createBufferSource();
-            bufferSource.loop = true;
-            databender.render(window.trackBuffer).then(function (buffer) { 
-              if (window.prevBufferSource) {
-                window.prevBufferSource.stop();
-              }
-              bufferSource.buffer = buffer;
-              bufferSource.connect(audioCtx.destination);
-              console.log(audioCtx.currentTime);
-              bufferSource.start(audioCtx.currentTime);
-              window.prevBufferSource = bufferSource;
-            });
-          }
-        });
-      });
-    }
+    };
   });
 };
 
@@ -54,9 +54,9 @@ function renderVideoToCanvas(v, renderCanvas) {
 
   function drawFrame(v, renderCanvas) {
     if(v.paused || v.ended) return false;
-    var databent = databender.bend(v).then(function(renderedBuffer) {
-      databender.draw(renderedBuffer, renderCanvas);
-    });
+    var databent = databender.bend(v)
+      .then(databender.render.bind(databender))
+      .then(databender.draw.bind(databender))
   }
 
   (function repeat() {
@@ -71,9 +71,9 @@ function handleImageUpload (e, renderCanvas) {
   reader.onload = function (e) {
     var img = new Image();
     img.onload = function () {
-      databender.bend(img).then(function (buffer) { 
-        databender.draw(buffer, renderCanvas); 
-      });
+      databender.bend(img)
+        .then(databender.render.bind(databender))
+        .then(databender.draw.bind(databender));
     };
     img.src = e.target.result;
   }
@@ -85,7 +85,7 @@ function handleVideoUpload(e, renderCanvas){
   var video = document.createElement('video');
 
   video.addEventListener('play', function () {
-    renderVideoToCanvas(this, renderCanvas);
+    renderVideoToCanvas(this);
   }, false);
 
   reader.onload = function (event) {
@@ -142,13 +142,13 @@ function getFileType(file) {
 };
 
 
-function handleFileUpload(file, renderCanvas) {
+function handleFileUpload(file) {
   var type = getFileType(file);
   switch (type) { 
     case 'image': 
-      return handleImageUpload(file, renderCanvas);
+      return handleImageUpload(file);
     case 'video':
-      return handleVideoUpload(file, renderCanvas);
+      return handleVideoUpload(file);
     default:
       alert('File Type is not supported');
       return false;
@@ -167,9 +167,9 @@ function main () {
     e.preventDefault();
     document.querySelector('.upload').style.display = 'none';
     var files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
-    handleFileUpload(files[0], renderCanvas);
+    handleFileUpload(files[0]);
   }
-  databender = new Databender(audioCtx);
+  databender = new Databender(audioCtx, renderCanvas);
   handleDatGUI(databender, renderCanvas);
 };
 
