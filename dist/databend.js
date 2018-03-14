@@ -161,7 +161,6 @@ return /******/ (function(modules) { // webpackBootstrap
             if (config.playbackRate.randomize) {
               bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
             } else if (config.playbackRate.enablePartial) {
-              
               bufferSource.playbackRate.setTargetAtTime(config.playbackRate.value, config.playbackRate.areaOfEffect, config.playbackRate.areaOfEffect);
             } else {
               bufferSource.playbackRate.value = config.playbackRate.value;
@@ -173,6 +172,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
           var noEffects = true;
           var tuna = new Tuna(offlineAudioCtx);
+
+          if (config.compressor.active) { 
+            var noEffects = false;
+            var compressor = offlineAudioCtx.createDynamicsCompressor();
+            compressor.threshold.value = config.compressor.threshold;
+            compressor.knee.value = config.compressor.knee;
+            compressor.ratio.value = config.compressor.ratio;
+            compressor.reduction.value = config.compressor.reduction;
+            compressor.attack.value = config.compressor.attack;
+            compressor.release.value = config.compressor.release;
+            bufferSource.connect(compressor);
+            compressor.connect(offlineAudioCtx.destination);
+          }
 
           if (config.bitcrusher.active) {
             var noEffects = false;
@@ -3262,7 +3274,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*jshint eqnull:true*/
 /* 3 */
 /***/ (function(module, exports) {
 
-module.exports = {"playAudio":false,"frameRate":30,"sampleRate":44100,"bitcrusher":{"active":false,"bits":4,"normfreq":0.1,"bufferSize":4096},"convolver":{"active":false,"highCut":22050,"lowCut":20,"dryLevel":1,"wetLevel":1,"level":1,"impulse":"CathedralRoom.wav"},"chorus":{"active":false,"feedback":0.4,"delay":0.0045,"depth":0.7,"rate":1.5,"bypass":0},"biquad":{"active":false,"areaOfEffect":1,"detune":0,"enablePartial":false,"randomize":false,"quality":1,"randomValues":2,"type":"highpass","biquadFrequency":4000},"gain":{"active":false,"value":1},"detune":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":0},"playbackRate":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":1},"pingPong":{"active":false,"feedback":0.3,"wetLevel":0.5,"delayTimeLeft":10,"delayTimeRight":10},"phaser":{"active":false,"rate":1.2,"depth":0.4,"feedback":0.5,"stereoPhase":10,"baseModulationFrequency":500},"wahwah":{"active":false,"automode":true,"baseFrequency":0.5,"excursionOctaves":2,"sweep":0.2,"resonance":10,"sensitivity":0.5}}
+module.exports = {"playAudio":false,"frameRate":30,"sampleRate":44100,"bitcrusher":{"active":false,"bits":4,"normfreq":0.1,"bufferSize":4096},"compressor":{"active":false,"threshold":-24,"knee":30,"ratio":12,"reduction":-20,"attack":0.003,"release":0.25},"convolver":{"active":false,"highCut":22050,"lowCut":20,"dryLevel":1,"wetLevel":1,"level":1,"impulse":"CathedralRoom.wav"},"chorus":{"active":false,"feedback":0.4,"delay":0.0045,"depth":0.7,"rate":1.5,"bypass":0},"biquad":{"active":false,"areaOfEffect":1,"detune":0,"enablePartial":false,"randomize":false,"quality":1,"randomValues":2,"type":"highpass","biquadFrequency":4000},"gain":{"active":false,"value":1},"detune":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":0},"playbackRate":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":1},"pingPong":{"active":false,"feedback":0.3,"wetLevel":0.5,"delayTimeLeft":10,"delayTimeRight":10},"phaser":{"active":false,"rate":1.2,"depth":0.4,"feedback":0.5,"stereoPhase":10,"baseModulationFrequency":500},"wahwah":{"active":false,"automode":true,"baseFrequency":0.5,"excursionOctaves":2,"sweep":0.2,"resonance":10,"sensitivity":0.5}}
 
 /***/ })
 /******/ ]);

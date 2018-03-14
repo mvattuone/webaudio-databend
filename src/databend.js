@@ -82,7 +82,6 @@
             if (config.playbackRate.randomize) {
               bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
             } else if (config.playbackRate.enablePartial) {
-              
               bufferSource.playbackRate.setTargetAtTime(config.playbackRate.value, config.playbackRate.areaOfEffect, config.playbackRate.areaOfEffect);
             } else {
               bufferSource.playbackRate.value = config.playbackRate.value;
@@ -94,6 +93,19 @@
 
           var noEffects = true;
           var tuna = new Tuna(offlineAudioCtx);
+
+          if (config.compressor.active) { 
+            var noEffects = false;
+            var compressor = offlineAudioCtx.createDynamicsCompressor();
+            compressor.threshold.value = config.compressor.threshold;
+            compressor.knee.value = config.compressor.knee;
+            compressor.ratio.value = config.compressor.ratio;
+            compressor.reduction.value = config.compressor.reduction;
+            compressor.attack.value = config.compressor.attack;
+            compressor.release.value = config.compressor.release;
+            bufferSource.connect(compressor);
+            compressor.connect(offlineAudioCtx.destination);
+          }
 
           if (config.bitcrusher.active) {
             var noEffects = false;

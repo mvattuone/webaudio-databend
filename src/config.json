@@ -8,6 +8,15 @@
     "normfreq": 0.1,
     "bufferSize": 4096
   },
+  "compressor": {
+    "active": false,
+    "threshold": -24,
+    "knee": 30,
+    "ratio": 12,
+    "reduction": -20,
+    "attack": 0.003,
+    "release": 0.25
+  },
   "convolver": {
     "active": false,
     "highCut": 22050,
