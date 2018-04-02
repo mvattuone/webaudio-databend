@@ -11,7 +11,11 @@ import 'rxjs/add/observable/of'
 
 import Tuna from 'tunajs'
 
-export const chorus = (offlineAudioCtx: OfflineAudioContext, bufferSource: AudioBufferSourceNode, config: { [key: string]: any }) => {
+export const chorus = (
+  offlineAudioCtx: OfflineAudioContext,
+  bufferSource: AudioBufferSourceNode,
+  config: { [key: string]: any }
+) => {
   const tuna = new Tuna(offlineAudioCtx)
 
   const chorus: AudioBufferSourceNode = new tuna.Chorus(config)

@@ -1,0 +1,86 @@
+/* Colors
+-------------------------- */
+$--color-white: #fff;
+$--color-black: #000;
+
+$--color-1: #f0eded;
+$--color-2: #df8773;
+$--color-3: #da293f;
+$--color-4: #8c898e;
+$--color-5: #332e3f;
+
+$--color-1-shadow-1: rgba($--color-5, 0.2);
+$--color-1-shadow-2: rgba($--color-5, 0.4);
+
+$--color-5-shadow-1: rgba($--color-1, 0.05);
+$--color-5-shadow-2: rgba($--color-1, 0.1);
+
+$--color-primary: $--color-3;
+$--color-secondary: $--color-2;
+$--color-success: #77874b;
+$--color-warning: #f47713;
+$--color-danger: #f44336;
+$--color-info: $--color-5;
+
+$--color-primary-light-1: mix($--color-white, $--color-primary, 10%);
+$--color-primary-light-2: mix($--color-white, $--color-primary, 20%);
+$--color-primary-light-3: mix($--color-white, $--color-primary, 30%);
+$--color-primary-light-4: mix($--color-white, $--color-primary, 40%);
+$--color-primary-light-5: mix($--color-white, $--color-primary, 50%);
+$--color-primary-light-6: mix($--color-white, $--color-primary, 60%);
+$--color-primary-light-7: mix($--color-white, $--color-primary, 70%);
+$--color-primary-light-8: mix($--color-white, $--color-primary, 80%);
+$--color-primary-light-9: mix($--color-white, $--color-primary, 90%);
+
+$--color-success-light: mix($--color-white, $--color-success, 80%);
+$--color-warning-light: mix($--color-white, $--color-warning, 80%);
+$--color-danger-light: mix($--color-white, $--color-danger, 80%);
+$--color-info-light: mix($--color-white, $--color-info, 80%);
+
+$--color-success-lighter: mix($--color-white, $--color-success, 90%);
+$--color-warning-lighter: mix($--color-white, $--color-warning, 90%);
+$--color-danger-lighter: mix($--color-white, $--color-danger, 90%);
+$--color-info-lighter: mix($--color-white, $--color-info, 90%);
+
+$--color-text-primary: $--color-1;
+$--color-text-regular: $--color-primary-light-9;
+$--color-text-secondary: $--color-2;
+$--color-text-placeholder: $--color-4;
+
+/* Background
+-------------------------- */
+$--background-color-base: $--color-2;
+
+$--border-color-base: $--color-1;
+$--border-color-light: $--color-1;
+$--border-color-lighter: $--color-1;
+$--border-color-extra-light: $--color-1;
+
+$--collapse-border-color: $--color-1;
+$--collapse-header-fill: $--color-5-shadow-2;
+$--collapse-content-fill: $--color-5-shadow-1;
+
+$--collapse-header-size: 22px;
+$--collapse-content-size: 20px;
+
+$--input-fill: $--color-5;
+$--input-color: $--color-1;
+$--input-border: $--color-4;
+
+$--select-dropdown-background: $--color-5;
+$--select-dropdown-border: $--color-4;
+
+$--popover-fill: $--color-5;
+$--popover-border-color: $--color-5;
+
+$--slider-main-background-color: $--color-1;
+$--slider-runway-background-color: $--color-5;
+
+$--switch-on-color: $--color-success;
+$--switch-off-color: $--color-danger;
+
+$--tooltip-fill: $--color-4;
+$--tooltip-border-color: $--color-4;
+$--tooltip-color: $--color-1;
+
+$--font-path: '~element-ui/lib/theme-chalk/fonts';

@@ -8,7 +8,10 @@ import 'rxjs/add/operator/map'
 
 import { pingPong, gain, config } from './effects'
 
-interface EffectsChain extends Array<(bufferSrc: AudioBufferSourceNode) => Observable<AudioBufferSourceNode | BiquadFilterNode | GainNode | OfflineAudioContext>> {}
+type AudioBufferNode = AudioBufferSourceNode | BiquadFilterNode | GainNode | OfflineAudioContext
+
+type Effect = (bufferSrc: AudioBufferSourceNode) => Observable<AudioBufferNode>
+type EffectsChain = Effect[]
 
 const createAudioBuffer = (image: ImageData) => {
   const audioContext = new AudioContext()
@@ -43,16 +46,21 @@ const createImageBuffer = (image: HTMLImageElement) => {
   return imageBuffer
 }
 
-const complete = (offlineAudioContext: OfflineAudioContext): Promise<AudioBuffer> => new Promise((resolve, reject) => {
-  offlineAudioContext.startRendering()
-  offlineAudioContext.oncomplete = e => resolve(e.renderedBuffer)
-})
+const complete = (offlineAudioContext: OfflineAudioContext): Promise<AudioBuffer> =>
+  new Promise((resolve, reject) => {
+    offlineAudioContext.startRendering()
+    offlineAudioContext.oncomplete = e => resolve(e.renderedBuffer)
+  })
 
-const applyEffects = (offlineAudioContext: OfflineAudioContext, bufferSource: AudioBufferSourceNode) => {
-  const userEffects: EffectsChain = [
-    (bufferSrc) => pingPong(offlineAudioContext, bufferSrc, config.pingPong),
-    (bufferSrc) => gain(offlineAudioContext, bufferSrc, config.gain),
-  ]
+const applyEffects = (
+  offlineAudioContext: OfflineAudioContext,
+  bufferSource: AudioBufferSourceNode,
+  userEffects: EffectsChain
+) => {
+  // const userEffects: EffectsChain = [
+  //   bufferSrc => pingPong(offlineAudioContext, bufferSrc, config.pingPong),
+  //   bufferSrc => gain(offlineAudioContext, bufferSrc, config.gain),
+  // ]
 
   const buffer$ = Observable.of(bufferSource)
   const bufferEnd$ = (bufferSrc: AudioBufferSourceNode) => {
@@ -60,25 +68,26 @@ const applyEffects = (offlineAudioContext: OfflineAudioContext, bufferSource: Au
     return Observable.of(offlineAudioContext)
   }
 
-  const effectsChain = [
-    ...userEffects,
-    bufferEnd$,
-  ].map(fn => ({ meta: {}, fn }))
+  const effectsChain = [...userEffects, bufferEnd$].map(fn => ({ meta: {}, fn }))
 
   const reduceEffects = (acc, effect) => acc.mergeMap(effect.fn)
-  const renderBuffer = (offlineAudioCtx: OfflineAudioContext) => Observable.fromPromise(complete(offlineAudioCtx))
+  const renderBuffer = (offlineAudioCtx: OfflineAudioContext) =>
+    Observable.fromPromise(complete(offlineAudioCtx))
 
   return effectsChain
-    .reduce(((acc, effect) => acc.mergeMap(effect.fn)), buffer$)
+    .reduce((acc, effect) => acc.mergeMap(effect.fn), buffer$)
     .mergeMap(renderBuffer)
 }
 
-export const bender = (image: HTMLImageElement): Observable<{ imageBuffer: ImageData, audioBuffer: AudioBuffer}>  => {
+export const bender = (
+  image: HTMLImageElement,
+  userEffects: EffectsChain
+): Observable<{ imageBuffer: ImageData; audioBuffer: AudioBuffer }> => {
   const { imageBuffer, bufferSource, offlineAudioContext } = createBuffers(image)
 
   bufferSource.start()
 
-  const effectsBuffer$ = applyEffects(offlineAudioContext, bufferSource)
+  const effectsBuffer$ = applyEffects(offlineAudioContext, bufferSource, userEffects)
 
   return effectsBuffer$.map(audioBuffer => ({ imageBuffer, audioBuffer }))
 }

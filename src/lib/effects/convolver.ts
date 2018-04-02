@@ -13,7 +13,11 @@ import 'rxjs/add/observable/of'
 
 import Tuna from 'tunajs'
 
-export const convolver = (offlineAudioCtx: OfflineAudioContext, bufferSource: AudioBufferSourceNode, config: { [key: string]: any }) => {
+export const convolver = (
+  offlineAudioCtx: OfflineAudioContext,
+  bufferSource: AudioBufferSourceNode,
+  config: { [key: string]: any }
+) => {
   const tuna = new Tuna(offlineAudioCtx)
 
   const convolver: AudioBufferSourceNode = new tuna.Convolver(config)

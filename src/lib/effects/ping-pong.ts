@@ -11,7 +11,11 @@ import 'rxjs/add/observable/of'
 
 import Tuna from 'tunajs'
 
-export const pingPong = (offlineAudioCtx: OfflineAudioContext, bufferSource: AudioBufferSourceNode, config: { [key: string]: any }) => {
+export const pingPong = (
+  offlineAudioCtx: OfflineAudioContext,
+  bufferSource: AudioBufferSourceNode,
+  config: { [key: string]: any }
+) => {
   const tuna = new Tuna(offlineAudioCtx)
 
   const pingPong: AudioBufferSourceNode = new tuna.PingPongDelay(config)

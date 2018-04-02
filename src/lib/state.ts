@@ -9,12 +9,12 @@ import 'rxjs/add/operator/map'
 const storageKey = 'bender_state'
 let localState = {}
 
-const loadStore = () => Observable
-  .from(localStorage.getItem(storageKey))
-  .filter(Boolean)
-  .map(data => JSON.parse(data))
-  .do(state => localState = Object.assign({}, state))
-  .subscribe(state => store.next(state))
+const loadStore = () =>
+  Observable.from(localStorage.getItem(storageKey))
+    .filter(Boolean)
+    .map(data => JSON.parse(data))
+    .do(state => (localState = Object.assign({}, state)))
+    .subscribe(state => store.next(state))
 
 const store = new BehaviorSubject(localState)
 export const changes = store
