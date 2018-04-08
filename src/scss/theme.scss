@@ -44,3 +44,23 @@
 .el-select {
   width: 100%;
 }
+
+// .sortable-ghost {
+//   background: rgba(255, 255, 255, 0.2);
+// }
+
+// .sortable-drag {
+
+// }
+
+.sortable-chosen {
+  opacity: 0 !important;
+}
+
+body > .full > .sidebar > .effects > div > .sortable-chosen {
+  opacity: 1 !important;
+}
+
+.fallback-class {
+  display: none;
+}

@@ -3,7 +3,7 @@
     <el-aside width="350px" class="sidebar">
       <el-collapse v-model="activeName" accordion class="effects" @change="doChange">
         <draggable
-          :options="{ handle: '.d-handle' }"
+          :options="{ handle: '.d-handle', animation: 150, forceFallback: true, fallbackClass: 'fallback-class', fallbackOnBody: true }"
           :list="selectedEffects">
           <el-collapse-item
             v-for="effect in selectedEffects"
@@ -17,7 +17,7 @@
                 v-if="!effectSelected">
                 <font-awesome-icon icon="bars"></font-awesome-icon>
               </span>
-              <span>{{ effect.label }}</span>
+              <span class="effect-label">{{ effect.label }}</span>
             </template>
 
             <el-form
@@ -153,16 +153,17 @@ export default {
         }, 500)
         setTimeout(() => {
           this.effectSelected = ''
+          this.animationStep = 'animationStep-0'
         }, 800)
       } else {
         this.effectSelected = val
-        this.animationStep = 'animationStep-1'
+        this.animationStep = 'animationStep-0'
+        setTimeout(() => {
+          this.animationStep = 'animationStep-1'
+        }, 500)
         setTimeout(() => {
           this.animationStep = 'animationStep-2'
-        }, 500)
-        // setTimeout(() => {
-        //   this.effectSelected = ''
-        // }, 1500)
+        }, 800)
       }
     },
   },
@@ -189,9 +190,20 @@ export default {
   transition: all 0.3s;
   opacity: 1;
   transform-origin: top;
+  position: relative;
+
+  .effect-label {
+    position: absolute;
+    left: 60px;
+    top: 0px;
+  }
 
   &:not(.is-active) {
-    height: 48px;
+    &.animationStep-0,
+    &.animationStep-1,
+    &.animationStep-2 {
+      height: 48px;
+    }
 
     &.animationStep-1,
     &.animationStep-2 {
@@ -233,7 +245,6 @@ export default {
   overflow-y: auto;
 }
 
-.effects,
 .effects-list {
   border-bottom: 0;
 }
