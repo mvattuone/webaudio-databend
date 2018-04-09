@@ -1,3 +1,4 @@
+export { config, Effect, Effects } from './effects'
 export * from './state'
 export * from './load-image'
 export * from './bender'

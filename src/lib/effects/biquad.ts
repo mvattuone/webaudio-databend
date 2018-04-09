@@ -18,7 +18,7 @@ export const biquad = (
 
   biquad.type = config.type
   biquad.frequency.value = config.frequency
-  biquad.Q.value = config.Q
+  biquad.Q.value = config.q
   biquad.detune.value = config.detune
 
   bufferSource.connect(biquad)

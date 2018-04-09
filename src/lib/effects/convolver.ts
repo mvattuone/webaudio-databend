@@ -11,7 +11,7 @@
 import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/observable/of'
 
-import Tuna from 'tunajs'
+import * as Tuna from 'tunajs'
 
 export const convolver = (
   offlineAudioCtx: OfflineAudioContext,

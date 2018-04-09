@@ -1,8 +1,8 @@
 /**
  * config:
- *  bits
- *  normfreq
- *  bufferSize
+ *  intensity
+ *  rate
+ *  stereoPhase
  */
 
 import { Observable } from 'rxjs/Observable'
@@ -10,15 +10,15 @@ import 'rxjs/add/observable/of'
 
 import * as Tuna from 'tunajs'
 
-export const bitcrusher = (
+export const tremelo = (
   offlineAudioCtx: OfflineAudioContext,
   bufferSource: AudioBufferSourceNode,
   config: { [key: string]: any }
 ) => {
   const tuna = new Tuna(offlineAudioCtx)
 
-  const bitcrusher: AudioBufferSourceNode = new tuna.Bitcrusher(config)
-  bufferSource.connect(bitcrusher)
+  const tremelo: AudioBufferSourceNode = new tuna.Tremelo(config)
+  bufferSource.connect(tremelo)
 
-  return Observable.of(bitcrusher)
+  return Observable.of(tremelo)
 }
