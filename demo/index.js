@@ -32,8 +32,10 @@ function handleDatGUI(databender, canvas){
 
         if (databender.config.playAudio && (param === 'active' || (param !== 'active' && value))) {
           var bufferSource = audioCtx.createBufferSource();
+          var boundRender = databender.render.bind(databender);
           bufferSource.loop = true;
-          databender.render(window.trackBuffer).then(function (buffer) { 
+
+          databender.boundRender(window.trackBuffer).then(function (buffer) { 
             if (window.prevBufferSource) {
               window.prevBufferSource.stop();
             }
