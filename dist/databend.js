@@ -78,8 +78,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ (function(module, exports, __webpack_require__) {
 
     var Tuna = __webpack_require__(1); 
-    window.random = __webpack_require__(2)();
-    var config = __webpack_require__(3);
+    var effects = __webpack_require__(2);
+    window.random = __webpack_require__(3)();
+    var config = __webpack_require__(4);
 
     // Create a Databender instance
     module.exports = function (audioCtx, renderCanvas) {
@@ -128,178 +129,42 @@ return /******/ (function(modules) { // webpackBootstrap
         // Set buffer to audio buffer containing image data
         bufferSource.buffer = buffer; 
 
-        // Seems to rotate the image, clockwise if postitive ccw if negative
-        if (config.detune.active) {
-          var noEffects = false;
-          if (config.detune.randomize) {
-            var waveArray = new Float32Array(config.detune.randomValues);
-            for (i=0;i<config.detune.randomValues;i++) {
-              waveArray[i] = window.random.real(0.0001, 400); 
-            }
-          }
-          if (config.detune.randomize) {
-            bufferSource.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-          } else if (config.detune.enablePartial) {
-            bufferSource.detune.setTargetAtTime(config.detune.value, config.detune.areaOfEffect, config.detune.areaOfEffect);
-          } else {
-            bufferSource.detune.value = config.detune.value;
-          };
-        }
-
-        // Seems to "play back" the image at a rate equal to the number
-        // (i.e. 4 yields 4 smaller rendered images)
-        if (config.playbackRate.active) {
-          var noEffects = false;
-          if (config.playbackRate.randomize) {
-            var waveArray = new Float32Array(config.playbackRate.randomValues);
-            for (i=0;i<config.playbackRate.randomValues;i++) {
-              waveArray[i] = window.random.integer(0.0001, 8); 
-            }
-          }
-          if (config.playbackRate.randomize) {
-            bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-          } else if (config.playbackRate.enablePartial) {
-            bufferSource.playbackRate.setTargetAtTime(config.playbackRate.value, config.playbackRate.areaOfEffect, config.playbackRate.areaOfEffect);
-          } else {
-            bufferSource.playbackRate.value = config.playbackRate.value;
-          };
-        }
-
-        //  @NOTE: Calling this is when the AudioBufferSourceNode becomes unusable
-        bufferSource.start();
-
         var noEffects = true;
         var tuna = new Tuna(offlineAudioCtx);
 
-        if (config.compressor.active) { 
-          var noEffects = false;
-          var compressor = offlineAudioCtx.createDynamicsCompressor();
-          compressor.threshold.value = config.compressor.threshold;
-          compressor.knee.value = config.compressor.knee;
-          compressor.ratio.value = config.compressor.ratio;
-          compressor.reduction.value = config.compressor.reduction;
-          compressor.attack.value = config.compressor.attack;
-          compressor.release.value = config.compressor.release;
-          bufferSource.connect(compressor);
-          compressor.connect(offlineAudioCtx.destination);
-        }
+        const configIndex = Object.keys(config);
 
-        if (config.bitcrusher.active) {
-          var noEffects = false;
+        var activeConfig = Object.keys(config).reduce((acc, cur) => {
+            config[cur].active ? acc[cur] = config[cur] : false; 
+            return acc;
+        }, {});
 
-          var crusher = new tuna.Bitcrusher({
-            bits: config.bitcrusher.bits,
-            normfreq: config.bitcrusher.normfreq,
-            bufferSize: config.bitcrusher.bufferSize
-          });
-          bufferSource.connect(crusher);
-          crusher.connect(offlineAudioCtx.destination);
-        }
 
-        if (config.chorus.active) {
-          var noEffects = false;
-
-          var chorus = new tuna.Chorus({
-            feedback: config.chorus.feedback,
-            delay: config.chorus.delay,
-            depth: config.chorus.depth,
-            rate: config.chorus.rate,
-          });
-          bufferSource.connect(chorus);
-          chorus.connect(offlineAudioCtx.destination);
-        }
-
-        if (config.biquad.active) {
-          var noEffects = false;
-          if (config.biquad.randomize) {
-            var waveArray = new Float32Array(config.biquad.randomValues);
-            for (i=0;i<config.biquad.randomValues;i++) {
-              waveArray[i] = window.random.real(0.0001, config.biquad.biquadFrequency); 
-            }
+    Object.keys(activeConfig).forEach((effect) => {
+          if (effect === 'detune' || effect === 'playbackRate') {
+            return effects[effect](bufferSource, config)
           }
-          var biquadFilter = offlineAudioCtx.createBiquadFilter();
-          biquadFilter.type = config.biquad.type;
-          if (config.biquad.randomize) {
-            biquadFilter.frequency.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-            biquadFilter.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-          } else if (config.biquad.enablePartial) {
-            biquadFilter.frequency.setTargetAtTime(config.biquad.biquadFrequency, config.biquad.areaOfEffect, config.biquad.areaOfEffect);
-          } else {
-            biquadFilter.frequency.value = config.biquad.biquadFrequency;
-          };
-          biquadFilter.Q.value = config.biquad.quality;
-          biquadFilter.detune.value = config.biquad.detune;
-          bufferSource.connect(biquadFilter);
-          biquadFilter.connect(offlineAudioCtx.destination);
+
+    });
+
+        bufferSource.start();
+
+        var nodes = Object.keys(activeConfig).map((effect) => { 
+          if (effect !== 'detune' && effect !== 'playbackRate') {
+          return effects[effect](tuna, config);
+          }
+        });
+
+        if (nodes.filter(Boolean).length === 0) {
+         bufferSource.connect(offlineAudioCtx.destination); 
+          return offlineAudioCtx.startRendering();
         }
 
-        if (config.gain.active) {
-          var noEffects = false;
-          var gainNode = offlineAudioCtx.createGain();
-          bufferSource.connect(gainNode);
-          gainNode.gain.value = config.gain.value;
-          gainNode.connect(offlineAudioCtx.destination);
-        }
-
-        if (config.pingPong.active) {
-          var noEffects = false;
-
-          var pingPongDelayNode = new tuna.PingPongDelay({
-            wetLevel: config.pingPong.wetLevel,
-            feedback: config.pingPong.feedback,
-            delayTimeLeft: config.pingPong.delayTimeLeft,
-            delayTimeRight: config.pingPong.delayTimeRight
-          });
-          bufferSource.connect(pingPongDelayNode);
-          pingPongDelayNode.connect(offlineAudioCtx.destination);
-        }
-
-        if (config.phaser.active) {
-          var noEffects = false;
-
-          tuna = new Tuna(offlineAudioCtx);
-          var phaser = new tuna.Phaser({
-            rate: config.phaser.rate,
-            depth: config.phaser.depth,
-            feedback: config.phaser.feedback,
-            stereoPhase: config.phaser.stereoPhase,
-            baseModulationFrequency: config.phaser.baseModulationFrequency
-          });
-          bufferSource.connect(phaser);
-          phaser.connect(offlineAudioCtx.destination);
-        }
-
-        if (config.convolver.active) {
-          var noEffects = false;
-          var convolver = new tuna.Convolver({
-            highCut: config.convolver.highCut,
-            lowCut: config.convolver.lowCut,
-            dryLevel: config.convolver.dryLevel,
-            wetLevel: config.convolver.wetLevel,
-            level: config.convolver.level,
-            impulse: config.convolver.impulse
-          });
-          bufferSource.connect(convolver);
-          convolver.connect(offlineAudioCtx.destination);
-        }
-
-        if(config.wahwah.active) {
-          var noEffects = false;
-          var wahwah = new tuna.WahWah({
-            automode: config.wahwah.automode,
-            baseFrequency: config.wahwah.baseFrequency,
-            excursionOctaves: config.wahwah.excursionOctaves,
-            sweep: config.wahwah.sweep,
-            resonance: config.wahwah.resonance,
-            sensitivity: config.wahwah.sensitivity
-          });
-          bufferSource.connect(wahwah);
-          wahwah.connect(offlineAudioCtx.destination);
-        }
-
-        if (noEffects) {
-          bufferSource.connect(offlineAudioCtx.destination);
-        }
+         nodes.filter(Boolean).forEach((node) => { 
+          bufferSource.connect(node);
+          node.connect(offlineAudioCtx.destination);
+        });
+        
 
         // Kick off the render, callback will contain rendered buffer in event
         return offlineAudioCtx.startRendering();
@@ -2543,6 +2408,134 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ }),
 /* 2 */
+/***/ (function(module, exports) {
+
+// @TODO: Separate into separate files and import into here
+
+exports.detune = (bufferSource, config) => {
+  if (config.detune.randomize) {
+    var waveArray = new Float32Array(config.detune.randomValues);
+    for (i=0;i<config.detune.randomValues;i++) {
+      waveArray[i] = window.random.real(0.0001, 400); 
+    }
+  }
+  if (config.detune.randomize) {
+    bufferSource.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
+  } else if (config.detune.enablePartial) {
+    bufferSource.detune.setTargetAtTime(config.detune.value, config.detune.areaOfEffect, config.detune.areaOfEffect);
+  } else {
+    bufferSource.detune.value = config.detune.value;
+  };
+  return bufferSource;
+}
+
+exports.playbackRate = (bufferSource, config) => {
+  if (config.playbackRate.randomize) {
+    var waveArray = new Float32Array(config.playbackRate.randomValues);
+    for (i=0;i<config.playbackRate.randomValues;i++) {
+      waveArray[i] = window.random.integer(0.0001, 8); 
+    }
+    bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
+  } else if (config.playbackRate.enablePartial) {
+    bufferSource.playbackRate.setTargetAtTime(config.playbackRate.value, config.playbackRate.areaOfEffect, config.playbackRate.areaOfEffect);
+  } else {
+    bufferSource.playbackRate.value = config.playbackRate.value;
+  };
+  return bufferSource;
+}
+
+exports.bitcrusher = (tuna, config) => {
+  return new tuna.Bitcrusher({
+    bits: config.bitcrusher.bits,
+    normfreq: config.bitcrusher.normfreq,
+    bufferSize: config.bitcrusher.bufferSize
+  });
+}
+
+exports.chorus = (tuna, config) => {
+  return new tuna.Chorus({
+    feedback: config.chorus.feedback,
+    delay: config.chorus.delay,
+    depth: config.chorus.depth,
+    rate: config.chorus.rate,
+  });
+}
+
+exports.biquad = (config) => {
+  if (config.biquad.randomize) {
+    var waveArray = new Float32Array(config.biquad.randomValues);
+    for (i=0;i<config.biquad.randomValues;i++) {
+      waveArray[i] = window.random.real(0.0001, config.biquad.biquadFrequency); 
+    }
+  }
+  var biquadFilter = offlineAudioCtx.createBiquadFilter();
+  biquadFilter.type = config.biquad.type;
+  if (config.biquad.randomize) {
+    biquadFilter.frequency.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
+    biquadFilter.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
+  } else if (config.biquad.enablePartial) {
+    biquadFilter.frequency.setTargetAtTime(config.biquad.biquadFrequency, config.biquad.areaOfEffect, config.biquad.areaOfEffect);
+  } else {
+    biquadFilter.frequency.value = config.biquad.biquadFrequency;
+  };
+  biquadFilter.Q.value = config.biquad.quality;
+  biquadFilter.detune.value = config.biquad.detune;
+  return biquadFilter;
+}
+
+
+exports.gain = (config) => {
+  const gainNode = offlineAudioCtx.createGain();
+  gainNode.gain.value = config.gain.value;
+  return gainNode;
+};
+
+exports.pingPong = (tuna, config) => { 
+  return new tuna.PingPongDelay({
+    wetLevel: config.pingPong.wetLevel,
+    feedback: config.pingPong.feedback,
+    delayTimeLeft: config.pingPong.delayTimeLeft,
+    delayTimeRight: config.pingPong.delayTimeRight
+  });
+};
+
+exports.phaser = (tuna, config) => { 
+  return new tuna.Phaser({
+    rate: config.phaser.rate,
+    depth: config.phaser.depth,
+    feedback: config.phaser.feedback,
+    stereoPhase: config.phaser.stereoPhase,
+    baseModulationFrequency: config.phaser.baseModulationFrequency
+  });
+};
+
+exports.convolver = (tuna, config) => {
+  return new tuna.Convolver({
+    highCut: config.convolver.highCut,
+    lowCut: config.convolver.lowCut,
+    dryLevel: config.convolver.dryLevel,
+    wetLevel: config.convolver.wetLevel,
+    level: config.convolver.level,
+    impulse: config.convolver.impulse
+  });
+};
+
+exports.wahwah = (tuna, config) => {
+  return new tuna.WahWah({
+    automode: config.wahwah.automode,
+    baseFrequency: config.wahwah.baseFrequency,
+    excursionOctaves: config.wahwah.excursionOctaves,
+    sweep: config.wahwah.sweep,
+    resonance: config.wahwah.resonance,
+    sensitivity: config.wahwah.sensitivity
+  });
+};
+
+
+
+
+/***/ }),
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*jshint eqnull:true*/
@@ -3264,7 +3257,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*jshint eqnull:true*/
 }(this));
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports) {
 
 module.exports = {"playAudio":false,"frameRate":30,"sampleRate":44100,"bitcrusher":{"active":false,"bits":4,"normfreq":0.1,"bufferSize":4096},"compressor":{"active":false,"threshold":-24,"knee":30,"ratio":12,"reduction":-20,"attack":0.003,"release":0.25},"convolver":{"active":false,"highCut":22050,"lowCut":20,"dryLevel":1,"wetLevel":1,"level":1,"impulse":"CathedralRoom.wav"},"chorus":{"active":false,"feedback":0.4,"delay":0.0045,"depth":0.7,"rate":1.5,"bypass":0},"biquad":{"active":false,"areaOfEffect":1,"detune":0,"enablePartial":false,"randomize":false,"quality":1,"randomValues":2,"type":"highpass","biquadFrequency":4000},"gain":{"active":false,"value":1},"detune":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":0},"playbackRate":{"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":1},"pingPong":{"active":false,"feedback":0.3,"wetLevel":0.5,"delayTimeLeft":10,"delayTimeRight":10},"phaser":{"active":false,"rate":1.2,"depth":0.4,"feedback":0.5,"stereoPhase":10,"baseModulationFrequency":500},"wahwah":{"active":false,"automode":true,"baseFrequency":0.5,"excursionOctaves":2,"sweep":0.2,"resonance":10,"sensitivity":0.5}}

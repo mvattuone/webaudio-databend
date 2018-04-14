@@ -1,4 +1,5 @@
     var Tuna = require('tunajs'); 
+    var effects = require('./effects');
     window.random = require('random-js')();
     var config = require('./config.json');
 
@@ -49,178 +50,36 @@
         // Set buffer to audio buffer containing image data
         bufferSource.buffer = buffer; 
 
-        // Seems to rotate the image, clockwise if postitive ccw if negative
-        if (config.detune.active) {
-          var noEffects = false;
-          if (config.detune.randomize) {
-            var waveArray = new Float32Array(config.detune.randomValues);
-            for (i=0;i<config.detune.randomValues;i++) {
-              waveArray[i] = window.random.real(0.0001, 400); 
-            }
-          }
-          if (config.detune.randomize) {
-            bufferSource.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-          } else if (config.detune.enablePartial) {
-            bufferSource.detune.setTargetAtTime(config.detune.value, config.detune.areaOfEffect, config.detune.areaOfEffect);
-          } else {
-            bufferSource.detune.value = config.detune.value;
-          };
-        }
+        var activeConfig = Object.keys(config).reduce((acc, cur) => {
+            config[cur].active ? acc[cur] = config[cur] : false; 
+            return acc;
+        }, {});
 
-        // Seems to "play back" the image at a rate equal to the number
-        // (i.e. 4 yields 4 smaller rendered images)
-        if (config.playbackRate.active) {
-          var noEffects = false;
-          if (config.playbackRate.randomize) {
-            var waveArray = new Float32Array(config.playbackRate.randomValues);
-            for (i=0;i<config.playbackRate.randomValues;i++) {
-              waveArray[i] = window.random.integer(0.0001, 8); 
-            }
+        Object.keys(activeConfig).forEach((effect) => {
+          if (effect === 'detune' || effect === 'playbackRate') {
+            return effects[effect](bufferSource, config)
           }
-          if (config.playbackRate.randomize) {
-            bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-          } else if (config.playbackRate.enablePartial) {
-            bufferSource.playbackRate.setTargetAtTime(config.playbackRate.value, config.playbackRate.areaOfEffect, config.playbackRate.areaOfEffect);
-          } else {
-            bufferSource.playbackRate.value = config.playbackRate.value;
-          };
-        }
+        });
 
-        //  @NOTE: Calling this is when the AudioBufferSourceNode becomes unusable
         bufferSource.start();
 
-        var noEffects = true;
         var tuna = new Tuna(offlineAudioCtx);
 
-        if (config.compressor.active) { 
-          var noEffects = false;
-          var compressor = offlineAudioCtx.createDynamicsCompressor();
-          compressor.threshold.value = config.compressor.threshold;
-          compressor.knee.value = config.compressor.knee;
-          compressor.ratio.value = config.compressor.ratio;
-          compressor.reduction.value = config.compressor.reduction;
-          compressor.attack.value = config.compressor.attack;
-          compressor.release.value = config.compressor.release;
-          bufferSource.connect(compressor);
-          compressor.connect(offlineAudioCtx.destination);
-        }
-
-        if (config.bitcrusher.active) {
-          var noEffects = false;
-
-          var crusher = new tuna.Bitcrusher({
-            bits: config.bitcrusher.bits,
-            normfreq: config.bitcrusher.normfreq,
-            bufferSize: config.bitcrusher.bufferSize
-          });
-          bufferSource.connect(crusher);
-          crusher.connect(offlineAudioCtx.destination);
-        }
-
-        if (config.chorus.active) {
-          var noEffects = false;
-
-          var chorus = new tuna.Chorus({
-            feedback: config.chorus.feedback,
-            delay: config.chorus.delay,
-            depth: config.chorus.depth,
-            rate: config.chorus.rate,
-          });
-          bufferSource.connect(chorus);
-          chorus.connect(offlineAudioCtx.destination);
-        }
-
-        if (config.biquad.active) {
-          var noEffects = false;
-          if (config.biquad.randomize) {
-            var waveArray = new Float32Array(config.biquad.randomValues);
-            for (i=0;i<config.biquad.randomValues;i++) {
-              waveArray[i] = window.random.real(0.0001, config.biquad.biquadFrequency); 
-            }
+        var nodes = Object.keys(activeConfig).map((effect) => { 
+          if (effect !== 'detune' && effect !== 'playbackRate') {
+          return effects[effect](tuna, config);
           }
-          var biquadFilter = offlineAudioCtx.createBiquadFilter();
-          biquadFilter.type = config.biquad.type;
-          if (config.biquad.randomize) {
-            biquadFilter.frequency.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-            biquadFilter.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-          } else if (config.biquad.enablePartial) {
-            biquadFilter.frequency.setTargetAtTime(config.biquad.biquadFrequency, config.biquad.areaOfEffect, config.biquad.areaOfEffect);
-          } else {
-            biquadFilter.frequency.value = config.biquad.biquadFrequency;
-          };
-          biquadFilter.Q.value = config.biquad.quality;
-          biquadFilter.detune.value = config.biquad.detune;
-          bufferSource.connect(biquadFilter);
-          biquadFilter.connect(offlineAudioCtx.destination);
+        }).filter(Boolean);
+
+        if (nodes.length === 0) {
+          nodes.push(offlineAudioCtx.destination);
         }
 
-        if (config.gain.active) {
-          var noEffects = false;
-          var gainNode = offlineAudioCtx.createGain();
-          bufferSource.connect(gainNode);
-          gainNode.gain.value = config.gain.value;
-          gainNode.connect(offlineAudioCtx.destination);
-        }
-
-        if (config.pingPong.active) {
-          var noEffects = false;
-
-          var pingPongDelayNode = new tuna.PingPongDelay({
-            wetLevel: config.pingPong.wetLevel,
-            feedback: config.pingPong.feedback,
-            delayTimeLeft: config.pingPong.delayTimeLeft,
-            delayTimeRight: config.pingPong.delayTimeRight
-          });
-          bufferSource.connect(pingPongDelayNode);
-          pingPongDelayNode.connect(offlineAudioCtx.destination);
-        }
-
-        if (config.phaser.active) {
-          var noEffects = false;
-
-          tuna = new Tuna(offlineAudioCtx);
-          var phaser = new tuna.Phaser({
-            rate: config.phaser.rate,
-            depth: config.phaser.depth,
-            feedback: config.phaser.feedback,
-            stereoPhase: config.phaser.stereoPhase,
-            baseModulationFrequency: config.phaser.baseModulationFrequency
-          });
-          bufferSource.connect(phaser);
-          phaser.connect(offlineAudioCtx.destination);
-        }
-
-        if (config.convolver.active) {
-          var noEffects = false;
-          var convolver = new tuna.Convolver({
-            highCut: config.convolver.highCut,
-            lowCut: config.convolver.lowCut,
-            dryLevel: config.convolver.dryLevel,
-            wetLevel: config.convolver.wetLevel,
-            level: config.convolver.level,
-            impulse: config.convolver.impulse
-          });
-          bufferSource.connect(convolver);
-          convolver.connect(offlineAudioCtx.destination);
-        }
-
-        if(config.wahwah.active) {
-          var noEffects = false;
-          var wahwah = new tuna.WahWah({
-            automode: config.wahwah.automode,
-            baseFrequency: config.wahwah.baseFrequency,
-            excursionOctaves: config.wahwah.excursionOctaves,
-            sweep: config.wahwah.sweep,
-            resonance: config.wahwah.resonance,
-            sensitivity: config.wahwah.sensitivity
-          });
-          bufferSource.connect(wahwah);
-          wahwah.connect(offlineAudioCtx.destination);
-        }
-
-        if (noEffects) {
-          bufferSource.connect(offlineAudioCtx.destination);
-        }
+         nodes.forEach((node) => { 
+          bufferSource.connect(node);
+          node.connect(offlineAudioCtx.destination);
+        });
+        
 
         // Kick off the render, callback will contain rendered buffer in event
         return offlineAudioCtx.startRendering();
