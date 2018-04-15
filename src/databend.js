@@ -6,6 +6,7 @@
     // Create a Databender instance
     module.exports = function (audioCtx, renderCanvas) {
       this.config = config;
+      this.configIndex = Object.keys(config);
 
       // Create an AudioContext or use existing one
       this.audioCtx = audioCtx ? audioCtx : new AudioContext();
@@ -31,15 +32,13 @@
         // This gives us the actual ArrayBuffer that contains the data
         var nowBuffering = audioBuffer.getChannelData(0);
 
-        // set the AudioBuffer buffer to the same as the imageData audioBuffer
-        // v. convenient becuase you do not need to convert the data yourself
         nowBuffering.set(this.imageData.data);
 
         return Promise.resolve(audioBuffer);
       }
 
       this.render = function (buffer) {
-        var config = this.config;
+        this.previousConfig = this.previousConfig || JSON.parse(JSON.stringify(this.config));
 
         // Create offlineAudioCtx that will house our rendered buffer
         var offlineAudioCtx = new OfflineAudioContext(this.channels, buffer.length * this.channels, this.audioCtx.sampleRate);
@@ -50,36 +49,47 @@
         // Set buffer to audio buffer containing image data
         bufferSource.buffer = buffer; 
 
-        var activeConfig = Object.keys(config).reduce((acc, cur) => {
+        if (this.previousConfig !== this.config) {
+          var activeConfig = this.configIndex.reduce((acc, cur) => {
             config[cur].active ? acc[cur] = config[cur] : false; 
             return acc;
-        }, {});
+          }, {});
+          var activeConfigIndex = Object.keys(activeConfig);
+          this.previousConfig = JSON.parse(JSON.stringify(this.config));
+        }
 
-        Object.keys(activeConfig).forEach((effect) => {
-          if (effect === 'detune' || effect === 'playbackRate') {
-            return effects[effect](bufferSource, config)
-          }
-        });
+        if (this.config !== this.config && activeConfigIndex && activeConfigIndex.length) {
+          activeConfigIndex.forEach((effect) => {
+            if (effect === 'detune' || effect === 'playbackRate') {
+              return effects[effect](bufferSource, config)
+            }
+          });
+        }
 
         bufferSource.start();
 
-        var tuna = new Tuna(offlineAudioCtx);
+        if (activeConfigIndex && activeConfigIndex.length) {
+          var tuna = new Tuna(offlineAudioCtx);
 
-        var nodes = Object.keys(activeConfig).map((effect) => { 
-          if (effect !== 'detune' && effect !== 'playbackRate') {
-          return effects[effect](tuna, config);
-          }
-        }).filter(Boolean);
-
-        if (nodes.length === 0) {
-          nodes.push(offlineAudioCtx.destination);
+          var nodes = activeConfigIndex.map((effect) => { 
+            if (effect !== 'detune' && effect !== 'playbackRate') {
+              if (effect === 'biquad') {
+                return effects[effect](bufferSource, offlineAudioCtx, config);
+              } else {
+                return effects[effect](tuna, config);
+              }
+            }
+          }).filter(Boolean);
         }
 
-         nodes.forEach((node) => { 
-          bufferSource.connect(node);
-          node.connect(offlineAudioCtx.destination);
-        });
-        
+        if (!nodes || nodes.length === 0) {
+          bufferSource.connect(offlineAudioCtx.destination);
+        } else {
+          nodes.forEach((node) => { 
+            bufferSource.connect(node);
+            node.connect(offlineAudioCtx.destination);
+          });
+        }
 
         // Kick off the render, callback will contain rendered buffer in event
         return offlineAudioCtx.startRendering();

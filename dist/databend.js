@@ -85,6 +85,7 @@ return /******/ (function(modules) { // webpackBootstrap
     // Create a Databender instance
     module.exports = function (audioCtx, renderCanvas) {
       this.config = config;
+      this.configIndex = Object.keys(config);
 
       // Create an AudioContext or use existing one
       this.audioCtx = audioCtx ? audioCtx : new AudioContext();
@@ -110,15 +111,13 @@ return /******/ (function(modules) { // webpackBootstrap
         // This gives us the actual ArrayBuffer that contains the data
         var nowBuffering = audioBuffer.getChannelData(0);
 
-        // set the AudioBuffer buffer to the same as the imageData audioBuffer
-        // v. convenient becuase you do not need to convert the data yourself
         nowBuffering.set(this.imageData.data);
 
         return Promise.resolve(audioBuffer);
       }
 
       this.render = function (buffer) {
-        var config = this.config;
+        this.previousConfig = this.previousConfig || JSON.parse(JSON.stringify(this.config));
 
         // Create offlineAudioCtx that will house our rendered buffer
         var offlineAudioCtx = new OfflineAudioContext(this.channels, buffer.length * this.channels, this.audioCtx.sampleRate);
@@ -129,42 +128,47 @@ return /******/ (function(modules) { // webpackBootstrap
         // Set buffer to audio buffer containing image data
         bufferSource.buffer = buffer; 
 
-        var noEffects = true;
-        var tuna = new Tuna(offlineAudioCtx);
-
-        const configIndex = Object.keys(config);
-
-        var activeConfig = Object.keys(config).reduce((acc, cur) => {
+        if (this.previousConfig !== this.config) {
+          var activeConfig = this.configIndex.reduce((acc, cur) => {
             config[cur].active ? acc[cur] = config[cur] : false; 
             return acc;
-        }, {});
+          }, {});
+          var activeConfigIndex = Object.keys(activeConfig);
+          this.previousConfig = JSON.parse(JSON.stringify(this.config));
+        }
 
-
-    Object.keys(activeConfig).forEach((effect) => {
-          if (effect === 'detune' || effect === 'playbackRate') {
-            return effects[effect](bufferSource, config)
-          }
-
-    });
+        if (this.config !== this.config && activeConfigIndex && activeConfigIndex.length) {
+          activeConfigIndex.forEach((effect) => {
+            if (effect === 'detune' || effect === 'playbackRate') {
+              return effects[effect](bufferSource, config)
+            }
+          });
+        }
 
         bufferSource.start();
 
-        var nodes = Object.keys(activeConfig).map((effect) => { 
-          if (effect !== 'detune' && effect !== 'playbackRate') {
-          return effects[effect](tuna, config);
-          }
-        });
+        if (activeConfigIndex && activeConfigIndex.length) {
+          var tuna = new Tuna(offlineAudioCtx);
 
-        if (nodes.filter(Boolean).length === 0) {
-         bufferSource.connect(offlineAudioCtx.destination); 
-          return offlineAudioCtx.startRendering();
+          var nodes = activeConfigIndex.map((effect) => { 
+            if (effect !== 'detune' && effect !== 'playbackRate') {
+              if (effect === 'biquad') {
+                return effects[effect](bufferSource, offlineAudioCtx, config);
+              } else {
+                return effects[effect](tuna, config);
+              }
+            }
+          }).filter(Boolean);
         }
 
-         nodes.filter(Boolean).forEach((node) => { 
-          bufferSource.connect(node);
-          node.connect(offlineAudioCtx.destination);
-        });
-        
+        if (!nodes || nodes.length === 0) {
+          bufferSource.connect(offlineAudioCtx.destination);
+        } else {
+          nodes.forEach((node) => { 
+            bufferSource.connect(node);
+            node.connect(offlineAudioCtx.destination);
+          });
+        }
 
         // Kick off the render, callback will contain rendered buffer in event
         return offlineAudioCtx.startRendering();
@@ -2461,7 +2465,7 @@ exports.chorus = (tuna, config) => {
   });
 }
 
-exports.biquad = (config) => {
+exports.biquad = (bufferSource, offlineAudioCtx, config) => {
   if (config.biquad.randomize) {
     var waveArray = new Float32Array(config.biquad.randomValues);
     for (i=0;i<config.biquad.randomValues;i++) {
