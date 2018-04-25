@@ -1,0 +1,45 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/Users/mvattuone/.nvm/versions/node/v5.0.0/bin/node',
+1 verbose cli   '/Users/mvattuone/.nvm/versions/node/v5.0.0/bin/npm',
+1 verbose cli   'run',
+1 verbose cli   'build:watch' ]
+2 info using npm@3.3.6
+3 info using node@v5.0.0
+4 verbose run-script [ 'prebuild:watch', 'build:watch', 'postbuild:watch' ]
+5 info lifecycle databend.js@1.0.0~prebuild:watch: databend.js@1.0.0
+6 silly lifecycle databend.js@1.0.0~prebuild:watch: no script for prebuild:watch, continuing
+7 info lifecycle databend.js@1.0.0~build:watch: databend.js@1.0.0
+8 verbose lifecycle databend.js@1.0.0~build:watch: unsafe-perm in lifecycle true
+9 verbose lifecycle databend.js@1.0.0~build:watch: PATH: /Users/mvattuone/.nvm/versions/node/v5.0.0/lib/node_modules/npm/bin/node-gyp-bin:/Users/mvattuone/Sites/webaudio-databend/node_modules/.bin:/Users/mvattuone/.nvm/versions/node/v5.0.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Wireshark.app/Contents/MacOS
+10 verbose lifecycle databend.js@1.0.0~build:watch: CWD: /Users/mvattuone/Sites/webaudio-databend
+11 silly lifecycle databend.js@1.0.0~build:watch: Args: [ '-c', 'rollup -c -w' ]
+12 silly lifecycle databend.js@1.0.0~build:watch: Returned: code: 1  signal: null
+13 info lifecycle databend.js@1.0.0~build:watch: Failed to exec build:watch script
+14 verbose stack Error: databend.js@1.0.0 build:watch: `rollup -c -w`
+14 verbose stack Exit status 1
+14 verbose stack     at EventEmitter.<anonymous> (/Users/mvattuone/.nvm/versions/node/v5.0.0/lib/node_modules/npm/lib/utils/lifecycle.js:233:16)
+14 verbose stack     at emitTwo (events.js:87:13)
+14 verbose stack     at EventEmitter.emit (events.js:172:7)
+14 verbose stack     at ChildProcess.<anonymous> (/Users/mvattuone/.nvm/versions/node/v5.0.0/lib/node_modules/npm/lib/utils/spawn.js:24:14)
+14 verbose stack     at emitTwo (events.js:87:13)
+14 verbose stack     at ChildProcess.emit (events.js:172:7)
+14 verbose stack     at maybeClose (internal/child_process.js:818:16)
+14 verbose stack     at Process.ChildProcess._handle.onexit (internal/child_process.js:211:5)
+15 verbose pkgid databend.js@1.0.0
+16 verbose cwd /Users/mvattuone/Sites/webaudio-databend
+17 error Darwin 17.5.0
+18 error argv "/Users/mvattuone/.nvm/versions/node/v5.0.0/bin/node" "/Users/mvattuone/.nvm/versions/node/v5.0.0/bin/npm" "run" "build:watch"
+19 error node v5.0.0
+20 error npm  v3.3.6
+21 error code ELIFECYCLE
+22 error databend.js@1.0.0 build:watch: `rollup -c -w`
+22 error Exit status 1
+23 error Failed at the databend.js@1.0.0 build:watch script 'rollup -c -w'.
+23 error This is most likely a problem with the databend.js package,
+23 error not with npm itself.
+23 error Tell the author that this fails on your system:
+23 error     rollup -c -w
+23 error You can get their info via:
+23 error     npm owner ls databend.js
+23 error There is likely additional logging output above.
+24 verbose exit [ 1, true ]

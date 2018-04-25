@@ -1,18 +1,14 @@
     var Tuna = require('tunajs'); 
     var effects = require('./effects');
     window.random = require('random-js')();
-    var config = require('./config.json');
 
     // Create a Databender instance
     module.exports = function (audioCtx, renderCanvas) {
-      this.config = config;
-      this.configIndex = Object.keys(config);
-
       // Create an AudioContext or use existing one
       this.audioCtx = audioCtx ? audioCtx : new AudioContext();
       this.renderCanvas = renderCanvas;
       
-      this.channels = 1; // @TODO: What would multiple channels look like? 
+      this.channels = 1; 
 
       this.bend = function (image) {
         if (image instanceof Image || image instanceof HTMLVideoElement) {
@@ -27,7 +23,7 @@
         var bufferSize = this.imageData.data.length / this.channels;
 
         // Make an audioBuffer on the audioContext to pass to the offlineAudioCtx AudioBufferSourceNode
-        var audioBuffer = this.audioCtx.createBuffer(this.channels, bufferSize, this.config.sampleRate); 
+        var audioBuffer = this.audioCtx.createBuffer(this.channels, bufferSize, this.audioCtx.sampleRate); 
 
         // This gives us the actual ArrayBuffer that contains the data
         var nowBuffering = audioBuffer.getChannelData(0);
@@ -37,8 +33,10 @@
         return Promise.resolve(audioBuffer);
       }
 
-      this.render = function (buffer) {
-        this.previousConfig = this.previousConfig || JSON.parse(JSON.stringify(this.config));
+      this.render = function (buffer, config) {
+        this.previousConfig = this.previousConfig || JSON.parse(JSON.stringify(config));
+
+        const configIndex = Object.keys(config);
 
         // Create offlineAudioCtx that will house our rendered buffer
         var offlineAudioCtx = new OfflineAudioContext(this.channels, buffer.length * this.channels, this.audioCtx.sampleRate);
@@ -49,16 +47,16 @@
         // Set buffer to audio buffer containing image data
         bufferSource.buffer = buffer; 
 
-        if (this.previousConfig !== this.config) {
-          var activeConfig = this.configIndex.reduce((acc, cur) => {
+        if (this.previousConfig !== config) {
+          var activeConfig = configIndex.reduce((acc, cur) => {
             config[cur].active ? acc[cur] = config[cur] : false; 
             return acc;
           }, {});
           var activeConfigIndex = Object.keys(activeConfig);
-          this.previousConfig = JSON.parse(JSON.stringify(this.config));
+          this.previousConfig = JSON.parse(JSON.stringify(config));
         }
 
-        if (this.config !== this.config && activeConfigIndex && activeConfigIndex.length) {
+        if (this.previousConfig !== config && activeConfigIndex && activeConfigIndex.length) {
           activeConfigIndex.forEach((effect) => {
             if (effect === 'detune' || effect === 'playbackRate') {
               return effects[effect](bufferSource, config)
