@@ -5,7 +5,6 @@ var webaudioDatabend = (function () {
   const frameRate = 30;
   const sampleRate = 44100;
   const bitcrusher = {"active":false,"bits":4,"normfreq":0.1,"bufferSize":4096};
-  const compressor = {"active":false,"threshold":-24,"knee":30,"ratio":12,"reduction":-20,"attack":0.003,"release":0.25};
   const convolver = {"active":false,"highCut":22050,"lowCut":20,"dryLevel":1,"wetLevel":1,"level":1,"impulse":"CathedralRoom.wav"};
   const chorus = {"active":false,"feedback":0.4,"delay":0.0045,"depth":0.7,"rate":1.5,"bypass":0};
   const biquad = {"active":false,"areaOfEffect":1,"detune":0,"enablePartial":false,"randomize":false,"quality":1,"randomValues":2,"type":"highpass","biquadFrequency":4000};
@@ -20,7 +19,6 @@ var webaudioDatabend = (function () {
   	frameRate: frameRate,
   	sampleRate: sampleRate,
   	bitcrusher: bitcrusher,
-  	compressor: compressor,
   	convolver: convolver,
   	chorus: chorus,
   	biquad: biquad,
@@ -37,7 +35,6 @@ var webaudioDatabend = (function () {
     frameRate: frameRate,
     sampleRate: sampleRate,
     bitcrusher: bitcrusher,
-    compressor: compressor,
     convolver: convolver,
     chorus: chorus,
     biquad: biquad,
@@ -2269,56 +2266,7 @@ var webaudioDatabend = (function () {
   })();
   });
 
-  // @TODO: Separate into separate files and import into here
-
-  var detune$1 = (bufferSource, config) => {
-    if (config.detune.randomize) {
-      var waveArray = new Float32Array(config.detune.randomValues);
-      for (i=0;i<config.detune.randomValues;i++) {
-        waveArray[i] = window.random.real(0.0001, 400); 
-      }
-    }
-    if (config.detune.randomize) {
-      bufferSource.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-    } else if (config.detune.enablePartial) {
-      bufferSource.detune.setTargetAtTime(config.detune.value, config.detune.areaOfEffect, config.detune.areaOfEffect);
-    } else {
-      bufferSource.detune.value = config.detune.value;
-    }  return bufferSource;
-  };
-
-  var playbackRate$1 = (bufferSource, config) => {
-    if (config.playbackRate.randomize) {
-      var waveArray = new Float32Array(config.playbackRate.randomValues);
-      for (i=0;i<config.playbackRate.randomValues;i++) {
-        waveArray[i] = window.random.integer(0.0001, 8); 
-      }
-      bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
-    } else if (config.playbackRate.enablePartial) {
-      bufferSource.playbackRate.setTargetAtTime(config.playbackRate.value, config.playbackRate.areaOfEffect, config.playbackRate.areaOfEffect);
-    } else {
-      bufferSource.playbackRate.value = config.playbackRate.value;
-    }  return bufferSource;
-  };
-
-  var bitcrusher$1 = (tuna, config) => {
-    return new tuna.Bitcrusher({
-      bits: config.bitcrusher.bits,
-      normfreq: config.bitcrusher.normfreq,
-      bufferSize: config.bitcrusher.bufferSize
-    });
-  };
-
-  var chorus$1 = (tuna, config) => {
-    return new tuna.Chorus({
-      feedback: config.chorus.feedback,
-      delay: config.chorus.delay,
-      depth: config.chorus.depth,
-      rate: config.chorus.rate,
-    });
-  };
-
-  var biquad$1 = (bufferSource, offlineAudioCtx, config) => {
+  var biquad_1 = (bufferSource, offlineAudioCtx, config) => {
     if (config.biquad.randomize) {
       var waveArray = new Float32Array(config.biquad.randomValues);
       for (i=0;i<config.biquad.randomValues;i++) {
@@ -2339,33 +2287,36 @@ var webaudioDatabend = (function () {
     return biquadFilter;
   };
 
-
-  var gain$1 = (config) => {
-    const gainNode = offlineAudioCtx.createGain();
-    gainNode.gain.value = config.gain.value;
-    return gainNode;
+  var biquad$1 = {
+  	biquad: biquad_1
   };
 
-  var pingPong$1 = (tuna, config) => { 
-    return new tuna.PingPongDelay({
-      wetLevel: config.pingPong.wetLevel,
-      feedback: config.pingPong.feedback,
-      delayTimeLeft: config.pingPong.delayTimeLeft,
-      delayTimeRight: config.pingPong.delayTimeRight
+  var bitcrusher_1 = (tuna, config) => {
+    return new tuna.Bitcrusher({
+      bits: config.bitcrusher.bits,
+      normfreq: config.bitcrusher.normfreq,
+      bufferSize: config.bitcrusher.bufferSize
     });
   };
 
-  var phaser$1 = (tuna, config) => { 
-    return new tuna.Phaser({
-      rate: config.phaser.rate,
-      depth: config.phaser.depth,
-      feedback: config.phaser.feedback,
-      stereoPhase: config.phaser.stereoPhase,
-      baseModulationFrequency: config.phaser.baseModulationFrequency
+  var bitcrusher$1 = {
+  	bitcrusher: bitcrusher_1
+  };
+
+  var chorus_1 = (tuna, config) => {
+    return new tuna.Chorus({
+      feedback: config.chorus.feedback,
+      delay: config.chorus.delay,
+      depth: config.chorus.depth,
+      rate: config.chorus.rate,
     });
   };
 
-  var convolver$1 = (tuna, config) => {
+  var chorus$1 = {
+  	chorus: chorus_1
+  };
+
+  var convolver_1 = (tuna, config) => {
     return new tuna.Convolver({
       highCut: config.convolver.highCut,
       lowCut: config.convolver.lowCut,
@@ -2376,7 +2327,86 @@ var webaudioDatabend = (function () {
     });
   };
 
-  var wahwah$1 = (tuna, config) => {
+  var convolver$1 = {
+  	convolver: convolver_1
+  };
+
+  var detune_1 = (bufferSource, config) => {
+    if (config.detune.randomize) {
+      var waveArray = new Float32Array(config.detune.randomValues);
+      for (i=0;i<config.detune.randomValues;i++) {
+        waveArray[i] = window.random.real(0.0001, 400); 
+      }
+    }
+    if (config.detune.randomize) {
+      bufferSource.detune.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
+    } else if (config.detune.enablePartial) {
+      bufferSource.detune.setTargetAtTime(config.detune.value, config.detune.areaOfEffect, config.detune.areaOfEffect);
+    } else {
+      bufferSource.detune.value = config.detune.value;
+    }  return bufferSource;
+  };
+
+  var detune$1 = {
+  	detune: detune_1
+  };
+
+  var gain_1 = (config) => {
+    const gainNode = offlineAudioCtx.createGain();
+    gainNode.gain.value = config.gain.value;
+    return gainNode;
+  };
+
+  var gain$1 = {
+  	gain: gain_1
+  };
+
+  var phaser_1 = (tuna, config) => { 
+    return new tuna.Phaser({
+      rate: config.phaser.rate,
+      depth: config.phaser.depth,
+      feedback: config.phaser.feedback,
+      stereoPhase: config.phaser.stereoPhase,
+      baseModulationFrequency: config.phaser.baseModulationFrequency
+    });
+  };
+
+  var phaser$1 = {
+  	phaser: phaser_1
+  };
+
+  var pingPong_1 = (tuna, config) => { 
+    return new tuna.PingPongDelay({
+      wetLevel: config.pingPong.wetLevel,
+      feedback: config.pingPong.feedback,
+      delayTimeLeft: config.pingPong.delayTimeLeft,
+      delayTimeRight: config.pingPong.delayTimeRight
+    });
+  };
+
+  var pingPong$1 = {
+  	pingPong: pingPong_1
+  };
+
+  var playbackRate_1 = (bufferSource, config) => {
+    if (config.playbackRate.randomize) {
+      var waveArray = new Float32Array(config.playbackRate.randomValues);
+      for (i=0;i<config.playbackRate.randomValues;i++) {
+        waveArray[i] = window.random.integer(0.0001, 8); 
+      }
+      bufferSource.playbackRate.setValueCurveAtTime(waveArray, 0, bufferSource.buffer.duration);
+    } else if (config.playbackRate.enablePartial) {
+      bufferSource.playbackRate.setTargetAtTime(config.playbackRate.value, config.playbackRate.areaOfEffect, config.playbackRate.areaOfEffect);
+    } else {
+      bufferSource.playbackRate.value = config.playbackRate.value;
+    }  return bufferSource;
+  };
+
+  var playbackRate$1 = {
+  	playbackRate: playbackRate_1
+  };
+
+  var wahwah_1 = (tuna, config) => {
     return new tuna.WahWah({
       automode: config.wahwah.automode,
       baseFrequency: config.wahwah.baseFrequency,
@@ -2387,17 +2417,32 @@ var webaudioDatabend = (function () {
     });
   };
 
+  var wahwah$1 = {
+  	wahwah: wahwah_1
+  };
+
+  var biquad$2 = biquad$1;
+  var bitcrusher$2 = bitcrusher$1;
+  var chorus$2 = chorus$1;
+  var convolver$2 = convolver$1;
+  var detune$2 = detune$1;
+  var gain$2 = gain$1;
+  var phaser$2 = phaser$1;
+  var pingPong$2 = pingPong$1;
+  var playbackRate$2 = playbackRate$1;
+  var wahwah$2 = wahwah$1;
+
   var effects = {
-  	detune: detune$1,
-  	playbackRate: playbackRate$1,
-  	bitcrusher: bitcrusher$1,
-  	chorus: chorus$1,
-  	biquad: biquad$1,
-  	gain: gain$1,
-  	pingPong: pingPong$1,
-  	phaser: phaser$1,
-  	convolver: convolver$1,
-  	wahwah: wahwah$1
+  	biquad: biquad$2,
+  	bitcrusher: bitcrusher$2,
+  	chorus: chorus$2,
+  	convolver: convolver$2,
+  	detune: detune$2,
+  	gain: gain$2,
+  	phaser: phaser$2,
+  	pingPong: pingPong$2,
+  	playbackRate: playbackRate$2,
+  	wahwah: wahwah$2
   };
 
   var random = createCommonjsModule(function (module) {
