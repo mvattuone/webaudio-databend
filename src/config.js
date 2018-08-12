@@ -8,10 +8,6 @@ const tools = {
     active: false,
     size: 48
   },
-  Eraser: {
-    active: false,
-    size: 48
-  },
   Fill: {
     active: false
   }
