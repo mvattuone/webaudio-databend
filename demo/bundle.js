@@ -14,6 +14,7 @@ var webaudioDatabend = (function () {
   const pingPong = {"active":false,"feedback":0.3,"wetLevel":0.5,"delayTimeLeft":10,"delayTimeRight":10};
   const phaser = {"active":false,"rate":1.2,"depth":0.4,"feedback":0.5,"stereoPhase":10,"baseModulationFrequency":500};
   const wahwah = {"active":false,"automode":true,"baseFrequency":0.5,"excursionOctaves":2,"sweep":0.2,"resonance":10,"sensitivity":0.5};
+  const brush = {"active":false,"size":10};
   var config = {
   	playAudio: playAudio,
   	frameRate: frameRate,
@@ -27,7 +28,8 @@ var webaudioDatabend = (function () {
   	playbackRate: playbackRate,
   	pingPong: pingPong,
   	phaser: phaser,
-  	wahwah: wahwah
+  	wahwah: wahwah,
+  	brush: brush
   };
 
   var config$1 = /*#__PURE__*/Object.freeze({
@@ -44,6 +46,7 @@ var webaudioDatabend = (function () {
     pingPong: pingPong,
     phaser: phaser,
     wahwah: wahwah,
+    brush: brush,
     default: config
   });
 
@@ -193,7 +196,7 @@ var webaudioDatabend = (function () {
               return new Tuna(context);
           }
 
-          var _window = typeof window === 'undefined' ? {} : window;
+          var _window = typeof window === "undefined" ? {} : window;
 
           if (!_window.AudioContext) {
               _window.AudioContext = _window.webkitAudioContext;
@@ -313,7 +316,7 @@ var webaudioDatabend = (function () {
 
           this.bits = properties.bits || this.defaults.bits.value;
           this.normfreq = initValue(properties.normfreq, this.defaults.normfreq.value);
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Bitcrusher.prototype = Object.create(Super, {
           name: {
@@ -384,8 +387,8 @@ var webaudioDatabend = (function () {
           this.convolver.output.connect(this.makeupNode);
           this.makeupNode.connect(this.output);
 
-          this.makeupGain = initValue(properties.makeupGain, this.defaults.makeupGain);
-          this.bypass = properties.bypass || false;
+          this.makeupGain = initValue(properties.makeupGain, this.defaults.makeupGain.value);
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Cabinet.prototype = Object.create(Super, {
           name: {
@@ -472,7 +475,7 @@ var webaudioDatabend = (function () {
           this.attenuator.gain.value = 0.6934; // 1 / (10 ^ (((20 * log10(3)) / 3) / 20))
           this.lfoL.activate(true);
           this.lfoR.activate(true);
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Chorus.prototype = Object.create(Super, {
           name: {
@@ -582,7 +585,7 @@ var webaudioDatabend = (function () {
           this.attack = initValue(properties.attack, this.defaults.attack.value);
           this.ratio = properties.ratio || this.defaults.ratio.value;
           this.knee = initValue(properties.knee, this.defaults.knee.value);
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Compressor.prototype = Object.create(Super, {
           name: {
@@ -750,7 +753,7 @@ var webaudioDatabend = (function () {
           this.level = initValue(properties.level, this.defaults.level.value);
           this.filterHigh.type = "lowpass";
           this.filterLow.type = "highpass";
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Convolver.prototype = Object.create(Super, {
           name: {
@@ -793,6 +796,11 @@ var webaudioDatabend = (function () {
                       max: 1,
                       automatable: true,
                       type: FLOAT
+                  },
+                  bypass: {
+                      value: false,
+                      automatable: false,
+                      type: BOOLEAN
                   }
               }
           },
@@ -894,7 +902,7 @@ var webaudioDatabend = (function () {
           this.dryLevel = initValue(properties.dryLevel, this.defaults.dryLevel.value);
           this.cutoff = properties.cutoff || this.defaults.cutoff.value;
           this.filter.type = "lowpass";
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Delay.prototype = Object.create(Super, {
           name: {
@@ -937,6 +945,11 @@ var webaudioDatabend = (function () {
                       max: 1,
                       automatable: true,
                       type: FLOAT
+                  },
+                  bypass: {
+                      value: false,
+                      automatable: false,
+                      type: BOOLEAN
                   }
               }
           },
@@ -1003,7 +1016,7 @@ var webaudioDatabend = (function () {
           this.Q = properties.resonance || this.defaults.Q.value;
           this.filterType = initValue(properties.filterType, this.defaults.filterType.value);
           this.gain = initValue(properties.gain, this.defaults.gain.value);
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Filter.prototype = Object.create(Super, {
           name: {
@@ -1060,7 +1073,7 @@ var webaudioDatabend = (function () {
                   return this.filter.Q;
               },
               set: function(value) {
-                  this.filter.Q.value = value;
+                  this.filter.Q.setTargetAtTime(value, 0, 0);
               }
           },
           gain: {
@@ -1097,7 +1110,7 @@ var webaudioDatabend = (function () {
           this.gainNode.connect(this.output);
 
           this.gain = initValue(properties.gain, this.defaults.gain.value);
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Gain.prototype = Object.create(Super, {
           name: {
@@ -1170,7 +1183,7 @@ var webaudioDatabend = (function () {
 
           this.cutoff = initValue(properties.cutoff, this.defaults.cutoff.value);
           this.resonance = initValue(properties.resonance, this.defaults.resonance.value);
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.MoogFilter.prototype = Object.create(Super, {
           name: {
@@ -1248,7 +1261,7 @@ var webaudioDatabend = (function () {
           this.outputGain = initValue(properties.outputGain, this.defaults.outputGain.value);
           this.curveAmount = initValue(properties.curveAmount, this.defaults.curveAmount.value);
           this.algorithmIndex = initValue(properties.algorithmIndex, this.defaults.algorithmIndex.value);
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Overdrive.prototype = Object.create(Super, {
           name: {
@@ -1286,6 +1299,11 @@ var webaudioDatabend = (function () {
                       max: 5,
                       automatable: false,
                       type: INT
+                  },
+                  bypass: {
+                      value: false,
+                      automatable: false,
+                      type: BOOLEAN
                   }
               }
           },
@@ -1410,7 +1428,7 @@ var webaudioDatabend = (function () {
           this.panner.connect(this.output);
 
           this.pan = initValue(properties.pan, this.defaults.pan.value);
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Panner.prototype = Object.create(Super, {
           name: {
@@ -1495,7 +1513,7 @@ var webaudioDatabend = (function () {
 
           this.lfoL.activate(true);
           this.lfoR.activate(true);
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Phaser.prototype = Object.create(Super, {
           name: {
@@ -1541,6 +1559,11 @@ var webaudioDatabend = (function () {
                       max: 1500,
                       automatable: false,
                       type: FLOAT
+                  },
+                  bypass: {
+                      value: false,
+                      automatable: false,
+                      type: BOOLEAN
                   }
               }
           },
@@ -1611,7 +1634,7 @@ var webaudioDatabend = (function () {
               properties = this.getDefaults();
           }
           this.input = userContext.createGain();
-          this.wetLevel = userContext.createGain();
+          this.wet = userContext.createGain();
           this.stereoToMonoMix = userContext.createGain();
           this.feedbackLevel = userContext.createGain();
           this.output = userContext.createGain();
@@ -1626,9 +1649,9 @@ var webaudioDatabend = (function () {
           this.splitter.connect(this.stereoToMonoMix, 0, 0);
           this.splitter.connect(this.stereoToMonoMix, 1, 0);
           this.stereoToMonoMix.gain.value = .5;
-          this.stereoToMonoMix.connect(this.wetLevel);
-          this.wetLevel.connect(this.delayLeft);
-          this.feedbackLevel.connect(this.delayLeft);
+          this.stereoToMonoMix.connect(this.wet);
+          this.wet.connect(this.delayLeft);
+          this.feedbackLevel.connect(this.wet);
           this.delayLeft.connect(this.delayRight);
           this.delayRight.connect(this.feedbackLevel);
           this.delayLeft.connect(this.merger, 0, 0);
@@ -1639,8 +1662,8 @@ var webaudioDatabend = (function () {
           this.delayTimeLeft = properties.delayTimeLeft !== undefined ? properties.delayTimeLeft : this.defaults.delayTimeLeft.value;
           this.delayTimeRight = properties.delayTimeRight !== undefined ? properties.delayTimeRight : this.defaults.delayTimeRight.value;
           this.feedbackLevel.gain.value = properties.feedback !== undefined ? properties.feedback : this.defaults.feedback.value;
-          this.wetLevel.gain.value = properties.wetLevel !== undefined ? properties.wetLevel : this.defaults.wetLevel.value;
-          this.bypass = properties.bypass || false;
+          this.wet.gain.value = properties.wetLevel !== undefined ? properties.wetLevel : this.defaults.wetLevel.value;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.PingPongDelay.prototype = Object.create(Super, {
           name: {
@@ -1664,6 +1687,24 @@ var webaudioDatabend = (function () {
               set: function(value) {
                   this._delayTimeRight = value;
                   this.delayRight.delayTime.value = value / 1000;
+              }
+          },
+          wetLevel: {
+              enumerable: true,
+              get: function () {
+                  return this.wet.gain;
+              },
+              set: function (value) {
+                  this.wet.gain.value = value;
+              }
+          }, 
+          feedback: {
+              enumerable: true,
+              get: function () {
+                  return this.feedbackLevel.gain;
+              },
+              set: function (value) {
+                  this.feedbackLevel.gain.value = value;
               }
           },
           defaults: {
@@ -1696,6 +1737,11 @@ var webaudioDatabend = (function () {
                       max: 1,
                       automatable: false,
                       type: FLOAT
+                  },
+                  bypass: {
+                      value: false,
+                      automatable: false,
+                      type: BOOLEAN
                   }
               }
           }
@@ -1738,7 +1784,7 @@ var webaudioDatabend = (function () {
 
           this.lfoL.activate(true);
           this.lfoR.activate(true);
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Tremolo.prototype = Object.create(Super, {
           name: {
@@ -1767,6 +1813,11 @@ var webaudioDatabend = (function () {
                       max: 11,
                       automatable: false,
                       type: FLOAT
+                  },
+                  bypass: {
+                      value: false,
+                      automatable: false,
+                      type: BOOLEAN
                   }
               }
           },
@@ -1840,7 +1891,7 @@ var webaudioDatabend = (function () {
 
           this.activateNode.gain.value = 2;
           this.envelopeFollower.activate(true);
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.WahWah.prototype = Object.create(Super, {
           name: {
@@ -1888,6 +1939,11 @@ var webaudioDatabend = (function () {
                       max: 1,
                       automatable: false,
                       type: FLOAT
+                  },
+                  bypass: {
+                      value: false,
+                      automatable: false,
+                      type: BOOLEAN
                   }
               }
           },
@@ -1908,13 +1964,14 @@ var webaudioDatabend = (function () {
               }
           },
           filterFreqTimeout: {
-              value: 0
+              value: 0,
+              writable: true
           },
           setFilterFreq: {
               value: function() {
                   try {
-                      this.filterBp.frequency.value = Math.min(22050, this._baseFrequency + this._excursionFrequency * this._sweep);
-                      this.filterPeaking.frequency.value = Math.min(22050, this._baseFrequency + this._excursionFrequency * this._sweep);
+                      this.filterBp.frequency.setValueAtTime(Math.min(22050, this._baseFrequency + this._excursionFrequency * this._sweep), 0, 0);
+                      this.filterPeaking.frequency.setValueAtTime(Math.min(22050, this._baseFrequency + this._excursionFrequency * this._sweep), 0, 0);
                   } catch (e) {
                       clearTimeout(this.filterFreqTimeout);
                       //put on the next cycle to let all init properties be set
@@ -1972,7 +2029,7 @@ var webaudioDatabend = (function () {
               },
               set: function(value) {
                   this._resonance = value;
-                  this.filterPeaking.Q = this._resonance;
+                  this.filterPeaking.Q.setValueAtTime(this._resonance, 0, 0);
               }
           },
           init: {
@@ -2004,7 +2061,7 @@ var webaudioDatabend = (function () {
           this.target = properties.target || {};
           this.callback = properties.callback || function() {};
 
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.EnvelopeFollower.prototype = Object.create(Super, {
           name: {
@@ -2025,6 +2082,11 @@ var webaudioDatabend = (function () {
                       max: 0.5,
                       automatable: false,
                       type: FLOAT
+                  },
+                  bypass: {
+                      value: false,
+                      automatable: false,
+                      type: BOOLEAN
                   }
               }
           },
@@ -2149,7 +2211,7 @@ var webaudioDatabend = (function () {
           this.phase = initValue(properties.phase, this.defaults.phase.value);
           this.target = properties.target || {};
           this.output.onaudioprocess = this.callback(properties.callback || function() {});
-          this.bypass = properties.bypass || false;
+          this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.LFO.prototype = Object.create(Super, {
           name: {
@@ -2190,6 +2252,11 @@ var webaudioDatabend = (function () {
                       max: 2 * Math.PI,
                       automatable: false,
                       type: FLOAT
+                  },
+                  bypass: {
+                      value: false,
+                      automatable: false,
+                      type: BOOLEAN
                   }
               }
           },
@@ -2266,7 +2333,7 @@ var webaudioDatabend = (function () {
   })();
   });
 
-  var biquad_1 = (bufferSource, offlineAudioCtx, config) => {
+  var biquad$1  = (bufferSource, offlineAudioCtx, config) => {
     if (config.biquad.randomize) {
       var waveArray = new Float32Array(config.biquad.randomValues);
       for (i=0;i<config.biquad.randomValues;i++) {
@@ -2287,11 +2354,7 @@ var webaudioDatabend = (function () {
     return biquadFilter;
   };
 
-  var biquad$1 = {
-  	biquad: biquad_1
-  };
-
-  var bitcrusher_1 = (tuna, config) => {
+  var bitcrusher$1 = (tuna, config) => {
     return new tuna.Bitcrusher({
       bits: config.bitcrusher.bits,
       normfreq: config.bitcrusher.normfreq,
@@ -2299,21 +2362,13 @@ var webaudioDatabend = (function () {
     });
   };
 
-  var bitcrusher$1 = {
-  	bitcrusher: bitcrusher_1
-  };
-
-  var chorus_1 = (tuna, config) => {
+  var chorus$1 = (tuna, config) => {
     return new tuna.Chorus({
       feedback: config.chorus.feedback,
       delay: config.chorus.delay,
       depth: config.chorus.depth,
       rate: config.chorus.rate,
     });
-  };
-
-  var chorus$1 = {
-  	chorus: chorus_1
   };
 
   var convolver_1 = (tuna, config) => {
@@ -2331,7 +2386,7 @@ var webaudioDatabend = (function () {
   	convolver: convolver_1
   };
 
-  var detune_1 = (bufferSource, config) => {
+  var detune$1 = (bufferSource, config) => {
     if (config.detune.randomize) {
       var waveArray = new Float32Array(config.detune.randomValues);
       for (i=0;i<config.detune.randomValues;i++) {
@@ -2347,21 +2402,13 @@ var webaudioDatabend = (function () {
     }  return bufferSource;
   };
 
-  var detune$1 = {
-  	detune: detune_1
-  };
-
-  var gain_1 = (config) => {
+  var gain$1 = (config) => {
     const gainNode = offlineAudioCtx.createGain();
     gainNode.gain.value = config.gain.value;
     return gainNode;
   };
 
-  var gain$1 = {
-  	gain: gain_1
-  };
-
-  var phaser_1 = (tuna, config) => { 
+  var phaser$1 = (tuna, config) => { 
     return new tuna.Phaser({
       rate: config.phaser.rate,
       depth: config.phaser.depth,
@@ -2371,11 +2418,7 @@ var webaudioDatabend = (function () {
     });
   };
 
-  var phaser$1 = {
-  	phaser: phaser_1
-  };
-
-  var pingPong_1 = (tuna, config) => { 
+  var pingPong$1 = (tuna, config) => { 
     return new tuna.PingPongDelay({
       wetLevel: config.pingPong.wetLevel,
       feedback: config.pingPong.feedback,
@@ -2384,11 +2427,7 @@ var webaudioDatabend = (function () {
     });
   };
 
-  var pingPong$1 = {
-  	pingPong: pingPong_1
-  };
-
-  var playbackRate_1 = (bufferSource, config) => {
+  var playbackRate$1 = (bufferSource, config) => {
     if (config.playbackRate.randomize) {
       var waveArray = new Float32Array(config.playbackRate.randomValues);
       for (i=0;i<config.playbackRate.randomValues;i++) {
@@ -2402,11 +2441,7 @@ var webaudioDatabend = (function () {
     }  return bufferSource;
   };
 
-  var playbackRate$1 = {
-  	playbackRate: playbackRate_1
-  };
-
-  var wahwah_1 = (tuna, config) => {
+  var wahwah$1 = (tuna, config) => {
     return new tuna.WahWah({
       automode: config.wahwah.automode,
       baseFrequency: config.wahwah.baseFrequency,
@@ -2415,10 +2450,6 @@ var webaudioDatabend = (function () {
       resonance: config.wahwah.resonance,
       sensitivity: config.wahwah.sensitivity
     });
-  };
-
-  var wahwah$1 = {
-  	wahwah: wahwah_1
   };
 
   var biquad$2 = biquad$1;
@@ -3165,119 +3196,119 @@ var webaudioDatabend = (function () {
 
   window.random = random();
 
-      // Create a Databender instance
-      var databend = function (audioCtx, renderCanvas) {
-        // Create an AudioContext or use existing one
-        this.audioCtx = audioCtx ? audioCtx : new AudioContext();
-        this.renderCanvas = renderCanvas;
-        
-        this.channels = 1; 
+  // Create a Databender instance
+  var databend = function (audioCtx, renderCanvas) {
+    // Create an AudioContext or use existing one
+    this.audioCtx = audioCtx ? audioCtx : new AudioContext();
+    this.renderCanvas = renderCanvas;
 
-        this.bend = function (image) {
-          if (image instanceof Image || image instanceof HTMLVideoElement) {
-            var canvas = document.createElement('canvas');
-            canvas.width = 1280;
-            canvas.height = 768;
-            var context = canvas.getContext('2d');
-            context.drawImage(image, 0, 0, canvas.width, canvas.height);
-            var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    this.channels = 1; 
+
+    this.bend = function (image) {
+      if (image instanceof Image || image instanceof HTMLVideoElement) {
+        var canvas = document.createElement('canvas');
+        canvas.width = 1280;
+        canvas.height = 768;
+        var context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      }
+      this.imageData = imageData || image;
+      var bufferSize = this.imageData.data.length / this.channels;
+
+      // Make an audioBuffer on the audioContext to pass to the offlineAudioCtx AudioBufferSourceNode
+      var audioBuffer = this.audioCtx.createBuffer(this.channels, bufferSize, this.audioCtx.sampleRate); 
+
+      // This gives us the actual ArrayBuffer that contains the data
+      var nowBuffering = audioBuffer.getChannelData(0);
+
+      nowBuffering.set(this.imageData.data);
+
+      return Promise.resolve(audioBuffer);
+    };
+
+    this.render = function (buffer, config) {
+      this.previousConfig = this.previousConfig || JSON.parse(JSON.stringify(config));
+
+      const configIndex = Object.keys(config);
+
+      // Create offlineAudioCtx that will house our rendered buffer
+      var offlineAudioCtx = new OfflineAudioContext(this.channels, buffer.length * this.channels, this.audioCtx.sampleRate);
+
+      // Create an AudioBufferSourceNode, which represents an audio source consisting of in-memory audio data
+      var bufferSource = offlineAudioCtx.createBufferSource();
+
+      // Set buffer to audio buffer containing image data
+      bufferSource.buffer = buffer; 
+
+      if (this.previousConfig !== config) {
+        var activeConfig = configIndex.reduce((acc, cur) => {
+          config[cur].active ? acc[cur] = config[cur] : false; 
+          return acc;
+        }, {});
+        var activeConfigIndex = Object.keys(activeConfig);
+        this.previousConfig = JSON.parse(JSON.stringify(config));
+      }
+
+      if (this.previousConfig !== config && activeConfigIndex && activeConfigIndex.length) {
+        activeConfigIndex.forEach((effect) => {
+          if (effect === 'detune' || effect === 'playbackRate') {
+            return effects[effect](bufferSource, config)
           }
-          this.imageData = imageData || image;
-          var bufferSize = this.imageData.data.length / this.channels;
+        });
+      }
 
-          // Make an audioBuffer on the audioContext to pass to the offlineAudioCtx AudioBufferSourceNode
-          var audioBuffer = this.audioCtx.createBuffer(this.channels, bufferSize, this.audioCtx.sampleRate); 
+      bufferSource.start();
 
-          // This gives us the actual ArrayBuffer that contains the data
-          var nowBuffering = audioBuffer.getChannelData(0);
+      if (activeConfigIndex && activeConfigIndex.length) {
+        var tuna$$1 = new tuna(offlineAudioCtx);
 
-          nowBuffering.set(this.imageData.data);
-
-          return Promise.resolve(audioBuffer);
-        };
-
-        this.render = function (buffer, config) {
-          this.previousConfig = this.previousConfig || JSON.parse(JSON.stringify(config));
-
-          const configIndex = Object.keys(config);
-
-          // Create offlineAudioCtx that will house our rendered buffer
-          var offlineAudioCtx = new OfflineAudioContext(this.channels, buffer.length * this.channels, this.audioCtx.sampleRate);
-
-          // Create an AudioBufferSourceNode, which represents an audio source consisting of in-memory audio data
-          var bufferSource = offlineAudioCtx.createBufferSource();
-
-          // Set buffer to audio buffer containing image data
-          bufferSource.buffer = buffer; 
-
-          if (this.previousConfig !== config) {
-            var activeConfig = configIndex.reduce((acc, cur) => {
-              config[cur].active ? acc[cur] = config[cur] : false; 
-              return acc;
-            }, {});
-            var activeConfigIndex = Object.keys(activeConfig);
-            this.previousConfig = JSON.parse(JSON.stringify(config));
+        var nodes = activeConfigIndex.map((effect) => { 
+          if (effect !== 'detune' && effect !== 'playbackRate' && effect !== 'brush') {
+            if (effect === 'biquad') {
+              return effects[effect](bufferSource, offlineAudioCtx, config);
+            } else {
+              return effects[effect](tuna$$1, config);
+            }
           }
+        }).filter(Boolean);
+      }
 
-          if (this.previousConfig !== config && activeConfigIndex && activeConfigIndex.length) {
-            activeConfigIndex.forEach((effect) => {
-              if (effect === 'detune' || effect === 'playbackRate') {
-                return effects[effect](bufferSource, config)
-              }
-            });
-          }
+      if (!nodes || nodes.length === 0) {
+        bufferSource.connect(offlineAudioCtx.destination);
+      } else {
+        nodes.forEach((node) => { 
+          bufferSource.connect(node);
+          node.connect(offlineAudioCtx.destination);
+        });
+      }
 
-          bufferSource.start();
+      // Kick off the render, callback will contain rendered buffer in event
+      return offlineAudioCtx.startRendering();
+    };
 
-          if (activeConfigIndex && activeConfigIndex.length) {
-            var tuna$$1 = new tuna(offlineAudioCtx);
+    this.draw = function (buffer, x = 0, y = 0) {
 
-            var nodes = activeConfigIndex.map((effect) => { 
-              if (effect !== 'detune' && effect !== 'playbackRate') {
-                if (effect === 'biquad') {
-                  return effects[effect](bufferSource, offlineAudioCtx, config);
-                } else {
-                  return effects[effect](tuna$$1, config);
-                }
-              }
-            }).filter(Boolean);
-          }
+      // Get buffer data
+      var bufferData = buffer.getChannelData(0);
 
-          if (!nodes || nodes.length === 0) {
-            bufferSource.connect(offlineAudioCtx.destination);
-          } else {
-            nodes.forEach((node) => { 
-              bufferSource.connect(node);
-              node.connect(offlineAudioCtx.destination);
-            });
-          }
+      // ImageData expects a Uint8ClampedArray so we need to make a typed array from our buffer
+      // @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
+      var clampedDataArray = new Uint8ClampedArray(buffer.length);
 
-          // Kick off the render, callback will contain rendered buffer in event
-          return offlineAudioCtx.startRendering();
-        };
+      // set the renderedBuffer to Uint8ClampedArray to use in ImageData later
+      clampedDataArray.set(bufferData);
 
-        this.draw = function (buffer) {
+      // putImageData requires an ImageData Object
+      // @see https://developer.mozilla.org/en-US/docs/Web/API/ImageData
+      var transformedImage = new ImageData(clampedDataArray, this.imageData.width, this.imageData.height);
 
-          // Get buffer data
-          var bufferData = buffer.getChannelData(0);
-
-          // ImageData expects a Uint8ClampedArray so we need to make a typed array from our buffer
-          // @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
-          var clampedDataArray = new Uint8ClampedArray(buffer.length);
-
-          // set the renderedBuffer to Uint8ClampedArray to use in ImageData later
-          clampedDataArray.set(bufferData);
-
-          // putImageData requires an ImageData Object
-          // @see https://developer.mozilla.org/en-US/docs/Web/API/ImageData
-          var transformedImage = new ImageData(clampedDataArray, this.imageData.width, this.imageData.height);
-
-          renderCanvas.getContext('2d').putImageData(transformedImage, 0, 0);
-        };
+      this.renderCanvas.getContext('2d').putImageData(transformedImage, x, y);
+    };
 
 
-        return this;
-      };
+    return this;
+  };
 
   /**
    * dat-gui JavaScript Controller Library
@@ -5800,18 +5831,18 @@ var webaudioDatabend = (function () {
 
   var dat = ( dat_gui_module && index ) || dat_gui_module;
 
-  function handleDatGUI(databender, renderCanvas, config){
+  function handleDatGUI(databender, audioCtx){
     var gui = new dat.GUI();
-    Object.keys(config).forEach(function (effect) {
+    Object.keys(config$2).forEach(function (effect) {
       if (effect === 'frameRate' || effect === 'sampleRate') { 
-        gui.add(config, effect);
+        gui.add(config$2, effect);
       } else if (effect === 'playAudio') {
-        gui.add(config, effect)
+        gui.add(config$2, effect)
           .onFinishChange(function (value) {
             if (!value) {
               var bufferSource = audioCtx.createBufferSource();
               bufferSource.loop = true;
-              databender.render(window.trackBuffer, config).then(function (buffer) { 
+              databender.render(window.trackBuffer, config$2).then(function (buffer) { 
                 window.prevBufferSource.stop();
                 bufferSource.buffer = buffer;
                 bufferSource.connect(audioCtx.destination);
@@ -5824,69 +5855,84 @@ var webaudioDatabend = (function () {
           });
       } else {
         var effectTab = gui.addFolder(effect);
-        Object.keys(config[effect]).forEach(function (param) {
-          effectTab.add(config[effect], param)            
-            .onFinishChange(function (value) { 
-              databender.bend(databender.imageData)
-                .then((buffer) => databender.render.call(databender, buffer, config))
-                .then((buffer) => databender.draw.call(databender, buffer, config));
-            });
+        if (effect === "brush") { 
+          effectTab.add(config$2["brush"], "active").onFinishChange((value) => {
+            if (value) { 
+              const canvas = document.querySelector('#canvas');
+              const context = canvas.getContext('2d');
+              const overlayCanvas = document.querySelector('#overlay');
+              const overlayContext = overlayCanvas.getContext('2d');
+              canvas.addEventListener('mousemove', (e) => handleDraw(e, context, overlayContext, databender));
+            } else {
+              canvas.removeEventListener('mousemove', handleDraw);
+            }
+          });
+          effectTab.add(config$2["brush"], "size");
+        } else {
+          Object.keys(config$2[effect]).forEach(function (param) {
+            effectTab.add(config$2[effect], param)            
+              .onFinishChange(function (value) { 
+                databender.bend(databender.imageData)
+                  .then((buffer) => databender.render.call(databender, buffer, config$2))
+                  .then((buffer) => databender.draw.call(databender, buffer));
+              });
 
-          if (config.playAudio && (param === 'active' || (param !== 'active' && value))) {
-            var bufferSource = audioCtx.createBufferSource();
-            var boundRender = databender.render.bind(databender);
-            bufferSource.loop = true;
+            if (config$2.playAudio && (param === 'active' || (param !== 'active' && value))) {
+              var bufferSource = audioCtx.createBufferSource();
+              var boundRender = databender.render.bind(databender);
+              bufferSource.loop = true;
 
-            databender.boundRender(window.trackBuffer).then(function (buffer) { 
-              if (window.prevBufferSource) {
-                window.prevBufferSource.stop();
-              }
-              bufferSource.buffer = buffer;
-              bufferSource.connect(audioCtx.destination);
-              bufferSource.start(audioCtx.currentTime);
-              window.prevBufferSource = bufferSource;
-            });
-          }
-        });
+              databender.boundRender(window.trackBuffer, config$2).then(function (buffer) { 
+                if (window.prevBufferSource) {
+                  window.prevBufferSource.stop();
+                }
+                bufferSource.buffer = buffer;
+                bufferSource.connect(audioCtx.destination);
+                bufferSource.start(audioCtx.currentTime);
+                window.prevBufferSource = bufferSource;
+              });
+            }
+          });
+        }
       }  });
   }
-  function renderVideoToCanvas(v, renderCanvas, databender, config) {
+  function renderVideoToCanvas(v, canvas, databender) {
     var timer;
     var time;
 
     function drawFrame() {
       if(v.paused || v.ended) return false;
       var databent = databender.bend(v)
-        .then((buffer) => databender.render.call(databender, buffer, config))
-        .then((buffer) => databender.draw.call(databender, buffer, config));
+        .then((buffer) => databender.render.call(databender, buffer, config$2))
+        .then((buffer) => databender.draw.call(databender, buffer));
     }
 
     (function repeat() {
-      time = 1000 / config.frameRate;  
-      drawFrame(v, renderCanvas);
+      time = 1000 / config$2.frameRate;  
+      drawFrame(v, canvas);
       timer = setTimeout(repeat, time);
     }());
   }
 
-  function handleImageUpload (e, renderCanvas, databender) {
+  function handleImageUpload (e, canvas, databender) {
     var reader = new FileReader();
     reader.onload = function (e) {
       var img = new Image();
       img.onload = function () {
         databender.bend(img)
         .then((buffer) => databender.render.call(databender, buffer, config$2))
-        .then((buffer) => databender.draw.call(databender, buffer, config$2));
+        .then((buffer) => databender.draw.call(databender, buffer));
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(e);
   }
-  function handleVideoUpload(e, renderCanvas, databender){
+  function handleVideoUpload(e, canvas, databender){
     var reader = new FileReader();
     var video = document.createElement('video');
 
     video.addEventListener('play', function () {
-      renderVideoToCanvas(this, renderCanvas, databender, config$2);
+      renderVideoToCanvas(this, canvas, databender);
     }, false);
 
     reader.onload = function (event) {
@@ -5899,30 +5945,26 @@ var webaudioDatabend = (function () {
     reader.readAsDataURL(e);
   }
 
-  function loadTrack (audioCtx, databender, config) {
-    var url = 'sample.mp3';
-    var request = new XMLHttpRequest();
-    request.open('GET', url, true);
-    request.responseType = 'arraybuffer';
-    // Decode asynchronously
-    request.onload = function() {
-      var bufferSource = audioCtx.createBufferSource();
-      bufferSource.loop = true;
-      audioCtx.decodeAudioData(request.response, function (buffer) { 
-        window.trackBuffer = buffer;
-        databender.render(window.trackBuffer, config).then(function (buffer) { 
-          bufferSource.buffer = buffer;
-          bufferSource.connect(audioCtx.destination);
-          if (config.playAudio) {
-            bufferSource.start(0);
-          }
-          window.prevBufferSource = bufferSource; 
+  function loadTrack (audioCtx, databender) {
+    fetch('sample.mp3')
+      .then((response) => response.arrayBuffer())
+      .then((buffer) => window.trackBuffer = buffer)
+      .then((buffer) => {
+        audioCtx.decodeAudioData(buffer).then((decodedData) => {
+          databender.render(decodedData, config$2).then(buffer => { 
+            var bufferSource = audioCtx.createBufferSource();
+            bufferSource.buffer = buffer;
+            bufferSource.connect(audioCtx.destination);
+            if (config$2.playAudio) {
+              bufferSource.start(0);
+            }
+            window.prevBufferSource = bufferSource; 
+          });
         });
+      }).catch((err) => {
+        console.error(`Error while loading: ${err}`);
       });
-    };
-    request.send();
   }
-
 
   function getFileType(file) {
     var imageFileTypes = ['jpg', 'png', 'bmp', 'jpeg'];
@@ -5941,23 +5983,49 @@ var webaudioDatabend = (function () {
     return fileType;
   }
 
-  function handleFileUpload(file, renderCanvas, databender) {
+  function handleFileUpload(file, canvas, databender) {
     var type = getFileType(file);
     switch (type) { 
       case 'image': 
-        return handleImageUpload(file, renderCanvas, databender);
+        return handleImageUpload(file, canvas, databender);
       case 'video':
-        return handleVideoUpload(file, renderCanvas, databender);
+        return handleVideoUpload(file, canvas, databender);
       default:
         alert('File Type is not supported');
         return false;
     }
   }
+  function prepareCanvas(id) {
+    const canvas = document.querySelector(id);
+    const context = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    return { canvas, context };
+  }
+
+  function handleDraw(e, context, overlayContext, databender) { 
+    overlayContext.clearRect(0, 0, canvas.width, canvas.height);
+    const { clientX, clientY } = e;
+    const drawX = clientX - Math.floor(parseInt(config$2.brush.size)/2) < 0 
+      ? 0 
+      : clientX - Math.floor(config$2.brush.size/2); 
+    const drawY = clientY - Math.floor(parseInt(config$2.brush.size/2)) < 0 
+      ? 0 
+      : clientY - Math.floor(config$2.brush.size/2); 
+    const imageSubset = context.getImageData(drawX, drawY, config$2.brush.size, config$2.brush.size);
+
+    databender.bend(imageSubset)
+      .then((buffer) => databender.render.call(databender, buffer, config$2))
+      .then((buffer) => databender.draw.call(databender, buffer, drawX, drawY));
+  }
+
+
   function main () {
     const audioCtx = new AudioContext();
-    const renderCanvas = document.querySelector('#canvas');
-    const databender = new databend(audioCtx, renderCanvas);
-    loadTrack(audioCtx, databender, config$2);
+    const { canvas, context } = prepareCanvas('#canvas');
+    const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
+    const databender = new databend(audioCtx, canvas, overlayCanvas);
+    loadTrack(audioCtx, databender);
     const upload = document.querySelector('.upload');
     var fileUpload = document.querySelector('input[type=file]');
     upload.ondragover = function () { this.classList.add('hover'); return false; };
@@ -5966,9 +6034,9 @@ var webaudioDatabend = (function () {
       e.preventDefault();
       document.querySelector('.upload').style.display = 'none';
       var files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
-      handleFileUpload(files[0], renderCanvas, databender);
+      handleFileUpload(files[0], canvas, databender);
     };
-    handleDatGUI(databender, renderCanvas, config$2);
+    handleDatGUI(databender, audioCtx);
   }
   main();
 

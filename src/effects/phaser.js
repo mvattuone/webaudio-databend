@@ -1,4 +1,4 @@
-exports.phaser = (tuna, config) => { 
+module.exports = (tuna, config) => { 
   return new tuna.Phaser({
     rate: config.phaser.rate,
     depth: config.phaser.depth,

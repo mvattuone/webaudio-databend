@@ -1,4 +1,4 @@
-exports.chorus = (tuna, config) => {
+module.exports = (tuna, config) => {
   return new tuna.Chorus({
     feedback: config.chorus.feedback,
     delay: config.chorus.delay,

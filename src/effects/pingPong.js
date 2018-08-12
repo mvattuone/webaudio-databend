@@ -1,4 +1,4 @@
-exports.pingPong = (tuna, config) => { 
+module.exports = (tuna, config) => { 
   return new tuna.PingPongDelay({
     wetLevel: config.pingPong.wetLevel,
     feedback: config.pingPong.feedback,

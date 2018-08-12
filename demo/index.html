@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <title>Webaudio Databending</title>
     <style>
+      .dg.ac {
+        z-index: 4 !important;
+      }
 
       .upload {
         border: 1px solid #000;
@@ -24,13 +27,32 @@
         display: block;
         text-align: center;
       }
+
+      #canvas, 
+      #overlay {
+        position: absolute;
+      }
+
+      #canvas {
+        z-index: 1;
+      }
+
+      #overlay {
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      img { 
+        display: none;
+      }
     </style>
   </head>
   <body>
     <div class="upload">
       <p>Drop video or image here to databend</p>
     </div>
-    <canvas width="1280" height="768" id="canvas"></canvas>
+    <canvas id="canvas"></canvas>
+    <canvas id="overlay"></canvas>
     <label><input type="file" /> Or upload a file</label>
     <script src="bundle.js"></script>
     <script>

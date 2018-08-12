@@ -2,7 +2,7 @@ const config = require('./config.json');
 const Databender = require('./databend.js');
 const dat = require('dat.gui');
 
-function handleDatGUI(databender, renderCanvas, config){
+function handleDatGUI(databender, audioCtx){
   var gui = new dat.GUI();
   Object.keys(config).forEach(function (effect) {
     if (effect === 'frameRate' || effect === 'sampleRate') { 
@@ -26,35 +26,50 @@ function handleDatGUI(databender, renderCanvas, config){
         });
     } else {
       var effectTab = gui.addFolder(effect);
-      Object.keys(config[effect]).forEach(function (param) {
-        effectTab.add(config[effect], param)            
-          .onFinishChange(function (value) { 
-            databender.bend(databender.imageData)
-              .then((buffer) => databender.render.call(databender, buffer, config))
-              .then((buffer) => databender.draw.call(databender, buffer, config))
-          });
+      if (effect === "brush") { 
+        effectTab.add(config["brush"], "active").onFinishChange((value) => {
+          if (value) { 
+            const canvas = document.querySelector('#canvas');
+            const context = canvas.getContext('2d');
+            const overlayCanvas = document.querySelector('#overlay');
+            const overlayContext = overlayCanvas.getContext('2d');
+            canvas.addEventListener('mousemove', (e) => handleDraw(e, context, overlayContext, databender));
+          } else {
+            canvas.removeEventListener('mousemove', handleDraw);
+          }
+        });
+        effectTab.add(config["brush"], "size");
+      } else {
+        Object.keys(config[effect]).forEach(function (param) {
+          effectTab.add(config[effect], param)            
+            .onFinishChange(function (value) { 
+              databender.bend(databender.imageData)
+                .then((buffer) => databender.render.call(databender, buffer, config))
+                .then((buffer) => databender.draw.call(databender, buffer))
+            });
 
-        if (config.playAudio && (param === 'active' || (param !== 'active' && value))) {
-          var bufferSource = audioCtx.createBufferSource();
-          var boundRender = databender.render.bind(databender);
-          bufferSource.loop = true;
+          if (config.playAudio && (param === 'active' || (param !== 'active' && value))) {
+            var bufferSource = audioCtx.createBufferSource();
+            var boundRender = databender.render.bind(databender);
+            bufferSource.loop = true;
 
-          databender.boundRender(window.trackBuffer).then(function (buffer) { 
-            if (window.prevBufferSource) {
-              window.prevBufferSource.stop();
-            }
-            bufferSource.buffer = buffer;
-            bufferSource.connect(audioCtx.destination);
-            bufferSource.start(audioCtx.currentTime);
-            window.prevBufferSource = bufferSource;
-          });
-        }
-      });
+            databender.boundRender(window.trackBuffer, config).then(function (buffer) { 
+              if (window.prevBufferSource) {
+                window.prevBufferSource.stop();
+              }
+              bufferSource.buffer = buffer;
+              bufferSource.connect(audioCtx.destination);
+              bufferSource.start(audioCtx.currentTime);
+              window.prevBufferSource = bufferSource;
+            });
+          }
+        });
+      }
     };
   });
 };
 
-function renderVideoToCanvas(v, renderCanvas, databender, config) {
+function renderVideoToCanvas(v, canvas, databender) {
   var timer;
   var time;
 
@@ -62,36 +77,36 @@ function renderVideoToCanvas(v, renderCanvas, databender, config) {
     if(v.paused || v.ended) return false;
     var databent = databender.bend(v)
       .then((buffer) => databender.render.call(databender, buffer, config))
-      .then((buffer) => databender.draw.call(databender, buffer, config))
+      .then((buffer) => databender.draw.call(databender, buffer))
   }
 
   (function repeat() {
     time = 1000 / config.frameRate;  
-    drawFrame(v, renderCanvas);
+    drawFrame(v, canvas);
     timer = setTimeout(repeat, time);
   }());
 }
 
-function handleImageUpload (e, renderCanvas, databender) {
+function handleImageUpload (e, canvas, databender) {
   var reader = new FileReader();
   reader.onload = function (e) {
     var img = new Image();
     img.onload = function () {
       databender.bend(img)
       .then((buffer) => databender.render.call(databender, buffer, config))
-      .then((buffer) => databender.draw.call(databender, buffer, config))
+      .then((buffer) => databender.draw.call(databender, buffer))
     };
     img.src = e.target.result;
   }
   reader.readAsDataURL(e);
 }; 
 
-function handleVideoUpload(e, renderCanvas, databender){
+function handleVideoUpload(e, canvas, databender){
   var reader = new FileReader();
   var video = document.createElement('video');
 
   video.addEventListener('play', function () {
-    renderVideoToCanvas(this, renderCanvas, databender, config);
+    renderVideoToCanvas(this, canvas, databender);
   }, false);
 
   reader.onload = function (event) {
@@ -104,30 +119,26 @@ function handleVideoUpload(e, renderCanvas, databender){
   reader.readAsDataURL(e);
 }
 
-function loadTrack (audioCtx, databender, config) {
-  var url = 'sample.mp3';
-  var request = new XMLHttpRequest();
-  request.open('GET', url, true);
-  request.responseType = 'arraybuffer';
-  // Decode asynchronously
-  request.onload = function() {
-    var bufferSource = audioCtx.createBufferSource();
-    bufferSource.loop = true;
-    audioCtx.decodeAudioData(request.response, function (buffer) { 
-      window.trackBuffer = buffer;
-      databender.render(window.trackBuffer, config).then(function (buffer) { 
-        bufferSource.buffer = buffer;
-        bufferSource.connect(audioCtx.destination);
-        if (config.playAudio) {
-          bufferSource.start(0);
-        }
-        window.prevBufferSource = bufferSource; 
+function loadTrack (audioCtx, databender) {
+  fetch('sample.mp3')
+    .then((response) => response.arrayBuffer())
+    .then((buffer) => window.trackBuffer = buffer)
+    .then((buffer) => {
+      audioCtx.decodeAudioData(buffer).then((decodedData) => {
+        databender.render(decodedData, config).then(buffer => { 
+          var bufferSource = audioCtx.createBufferSource();
+          bufferSource.buffer = buffer;
+          bufferSource.connect(audioCtx.destination);
+          if (config.playAudio) {
+            bufferSource.start(0);
+          }
+          window.prevBufferSource = bufferSource; 
+        });
       });
+    }).catch((err) => {
+      console.error(`Error while loading: ${err}`);
     });
-  };
-  request.send();
 };
-
 
 
 function getFileType(file) {
@@ -148,24 +159,50 @@ function getFileType(file) {
 };
 
 
-function handleFileUpload(file, renderCanvas, databender) {
+function handleFileUpload(file, canvas, databender) {
   var type = getFileType(file);
   switch (type) { 
     case 'image': 
-      return handleImageUpload(file, renderCanvas, databender);
+      return handleImageUpload(file, canvas, databender);
     case 'video':
-      return handleVideoUpload(file, renderCanvas, databender);
+      return handleVideoUpload(file, canvas, databender);
     default:
       alert('File Type is not supported');
       return false;
   }
 };
 
+function prepareCanvas(id) {
+  const canvas = document.querySelector(id);
+  const context = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  return { canvas, context };
+}
+
+function handleDraw(e, context, overlayContext, databender) { 
+  overlayContext.clearRect(0, 0, canvas.width, canvas.height);
+  const { clientX, clientY } = e;
+  const drawX = clientX - Math.floor(parseInt(config.brush.size)/2) < 0 
+    ? 0 
+    : clientX - Math.floor(config.brush.size/2); 
+  const drawY = clientY - Math.floor(parseInt(config.brush.size/2)) < 0 
+    ? 0 
+    : clientY - Math.floor(config.brush.size/2); 
+  const imageSubset = context.getImageData(drawX, drawY, config.brush.size, config.brush.size);
+
+  databender.bend(imageSubset)
+    .then((buffer) => databender.render.call(databender, buffer, config))
+    .then((buffer) => databender.draw.call(databender, buffer, drawX, drawY))
+}
+
+
 function main () {
   const audioCtx = new AudioContext();
-  const renderCanvas = document.querySelector('#canvas');
-  const databender = new Databender(audioCtx, renderCanvas);
-  loadTrack(audioCtx, databender, config);
+  const { canvas, context } = prepareCanvas('#canvas');
+  const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
+  const databender = new Databender(audioCtx, canvas, overlayCanvas);
+  loadTrack(audioCtx, databender);
   const upload = document.querySelector('.upload');
   var fileUpload = document.querySelector('input[type=file]');
   upload.ondragover = function () { this.classList.add('hover'); return false; };
@@ -174,9 +211,9 @@ function main () {
     e.preventDefault();
     document.querySelector('.upload').style.display = 'none';
     var files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
-    handleFileUpload(files[0], renderCanvas, databender);
+    handleFileUpload(files[0], canvas, databender);
   }
-  handleDatGUI(databender, renderCanvas, config);
+  handleDatGUI(databender, audioCtx);
 };
 
 main();

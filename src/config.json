@@ -79,5 +79,9 @@
     "sweep": 0.2,
     "resonance": 10,
     "sensitivity": 0.5
+  },
+  "brush": {
+    "active": false,
+    "size": 10
   }
 }

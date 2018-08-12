@@ -1,6 +1,6 @@
 'use strict';
 
-exports.detune = (bufferSource, config) => {
+module.exports = (bufferSource, config) => {
   if (config.detune.randomize) {
     var waveArray = new Float32Array(config.detune.randomValues);
     for (i=0;i<config.detune.randomValues;i++) {
