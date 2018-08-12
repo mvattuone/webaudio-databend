@@ -1,54 +1,111 @@
 var webaudioDatabend = (function () {
   'use strict';
 
-  const playAudio = false;
-  const frameRate = 30;
-  const sampleRate = 44100;
-  const bitcrusher = {"active":false,"bits":4,"normfreq":0.1,"bufferSize":4096};
-  const convolver = {"active":false,"highCut":22050,"lowCut":20,"dryLevel":1,"wetLevel":1,"level":1,"impulse":"CathedralRoom.wav"};
-  const chorus = {"active":false,"feedback":0.4,"delay":0.0045,"depth":0.7,"rate":1.5,"bypass":0};
-  const biquad = {"active":false,"areaOfEffect":1,"detune":0,"enablePartial":false,"randomize":false,"quality":1,"randomValues":2,"type":"highpass","biquadFrequency":4000};
-  const gain = {"active":false,"value":1};
-  const detune = {"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":0};
-  const playbackRate = {"active":false,"areaOfEffect":1,"enablePartial":false,"randomize":false,"randomValues":2,"value":1};
-  const pingPong = {"active":false,"feedback":0.3,"wetLevel":0.5,"delayTimeLeft":10,"delayTimeRight":10};
-  const phaser = {"active":false,"rate":1.2,"depth":0.4,"feedback":0.5,"stereoPhase":10,"baseModulationFrequency":500};
-  const wahwah = {"active":false,"automode":true,"baseFrequency":0.5,"excursionOctaves":2,"sweep":0.2,"resonance":10,"sensitivity":0.5};
-  const brush = {"active":false,"size":48};
-  var config = {
-  	playAudio: playAudio,
-  	frameRate: frameRate,
-  	sampleRate: sampleRate,
-  	bitcrusher: bitcrusher,
-  	convolver: convolver,
-  	chorus: chorus,
-  	biquad: biquad,
-  	gain: gain,
-  	detune: detune,
-  	playbackRate: playbackRate,
-  	pingPong: pingPong,
-  	phaser: phaser,
-  	wahwah: wahwah,
-  	brush: brush
+  const options = {
+    playAudio: false,
+    frameRate: 30
   };
 
-  var config$1 = /*#__PURE__*/Object.freeze({
-    playAudio: playAudio,
-    frameRate: frameRate,
-    sampleRate: sampleRate,
-    bitcrusher: bitcrusher,
-    convolver: convolver,
-    chorus: chorus,
-    biquad: biquad,
-    gain: gain,
-    detune: detune,
-    playbackRate: playbackRate,
-    pingPong: pingPong,
-    phaser: phaser,
-    wahwah: wahwah,
-    brush: brush,
-    default: config
-  });
+  const tools = {
+    Brush: {
+      active: false,
+      size: 48
+    },
+    Eraser: {
+      active: false,
+      size: 48
+    },
+    Fill: {
+      active: false
+    }
+  };
+
+  const effects = {
+    bitcrusher: {
+      active: false,
+      bits: 4,
+      normfreq: 0.1,
+      bufferSize: 4096
+    },
+    convolver: {
+      active: false,
+      highCut: 22050,
+      lowCut: 20,
+      dryLevel: 1,
+      wetLevel: 1,
+      level: 1,
+      impulse: "CathedralRoom.wav" 
+    },
+    chorus: {
+      active: false,
+      feedback: 0.4,
+      delay: 0.0045,
+      depth: 0.7,
+      rate: 1.5,
+      bypass: 0
+    },
+    biquad: {
+      active: false,
+      areaOfEffect: 1,
+      detune: 0,
+      enablePartial: false,
+      randomize: false,
+      quality: 1,
+      randomValues: 2,
+      type: "highpass",
+      biquadFrequency: 4000
+    },
+    gain: {
+      active: false,
+      value: 1
+    },
+    detune: {
+      active: false,
+      areaOfEffect: 1,
+      enablePartial: false,
+      randomize: false,
+      randomValues: 2,
+      value: 0
+    },
+    playbackRate: {
+      active: false,
+      areaOfEffect: 1,
+      enablePartial: false,
+      randomize: false,
+      randomValues: 2,
+      value: 1
+    },
+    pingPong: {
+      active: false,
+      feedback: 0.3,
+      wetLevel: 0.5,
+      delayTimeLeft: 10,
+      delayTimeRight: 10
+    },
+    phaser: {
+      active: false,
+      rate: 1.2,
+      depth: 0.4,
+      feedback: 0.5,
+      stereoPhase: 10,
+      baseModulationFrequency: 500
+    },
+    wahwah: {
+      active: false,
+      automode: true,
+      baseFrequency: 0.5,
+      excursionOctaves: 2,
+      sweep: 0.2,
+      resonance: 10,
+      sensitivity: 0.5
+    }
+  };
+
+  var config = {
+    options,
+    tools,
+    effects
+  };
 
   var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -2333,7 +2390,7 @@ var webaudioDatabend = (function () {
   })();
   });
 
-  var biquad$1  = (bufferSource, offlineAudioCtx, config) => {
+  var biquad  = (bufferSource, offlineAudioCtx, config) => {
     if (config.biquad.randomize) {
       var waveArray = new Float32Array(config.biquad.randomValues);
       for (i=0;i<config.biquad.randomValues;i++) {
@@ -2354,7 +2411,7 @@ var webaudioDatabend = (function () {
     return biquadFilter;
   };
 
-  var bitcrusher$1 = (tuna, config) => {
+  var bitcrusher = (tuna, config) => {
     return new tuna.Bitcrusher({
       bits: config.bitcrusher.bits,
       normfreq: config.bitcrusher.normfreq,
@@ -2362,7 +2419,7 @@ var webaudioDatabend = (function () {
     });
   };
 
-  var chorus$1 = (tuna, config) => {
+  var chorus = (tuna, config) => {
     return new tuna.Chorus({
       feedback: config.chorus.feedback,
       delay: config.chorus.delay,
@@ -2382,11 +2439,11 @@ var webaudioDatabend = (function () {
     });
   };
 
-  var convolver$1 = {
+  var convolver = {
   	convolver: convolver_1
   };
 
-  var detune$1 = (bufferSource, config) => {
+  var detune = (bufferSource, config) => {
     if (config.detune.randomize) {
       var waveArray = new Float32Array(config.detune.randomValues);
       for (i=0;i<config.detune.randomValues;i++) {
@@ -2402,13 +2459,13 @@ var webaudioDatabend = (function () {
     }  return bufferSource;
   };
 
-  var gain$1 = (config) => {
+  var gain = (config) => {
     const gainNode = offlineAudioCtx.createGain();
     gainNode.gain.value = config.gain.value;
     return gainNode;
   };
 
-  var phaser$1 = (tuna, config) => { 
+  var phaser = (tuna, config) => { 
     return new tuna.Phaser({
       rate: config.phaser.rate,
       depth: config.phaser.depth,
@@ -2418,7 +2475,7 @@ var webaudioDatabend = (function () {
     });
   };
 
-  var pingPong$1 = (tuna, config) => { 
+  var pingPong = (tuna, config) => { 
     return new tuna.PingPongDelay({
       wetLevel: config.pingPong.wetLevel,
       feedback: config.pingPong.feedback,
@@ -2427,7 +2484,7 @@ var webaudioDatabend = (function () {
     });
   };
 
-  var playbackRate$1 = (bufferSource, config) => {
+  var playbackRate = (bufferSource, config) => {
     if (config.playbackRate.randomize) {
       var waveArray = new Float32Array(config.playbackRate.randomValues);
       for (i=0;i<config.playbackRate.randomValues;i++) {
@@ -2441,7 +2498,7 @@ var webaudioDatabend = (function () {
     }  return bufferSource;
   };
 
-  var wahwah$1 = (tuna, config) => {
+  var wahwah = (tuna, config) => {
     return new tuna.WahWah({
       automode: config.wahwah.automode,
       baseFrequency: config.wahwah.baseFrequency,
@@ -2452,28 +2509,28 @@ var webaudioDatabend = (function () {
     });
   };
 
-  var biquad$2 = biquad$1;
-  var bitcrusher$2 = bitcrusher$1;
-  var chorus$2 = chorus$1;
-  var convolver$2 = convolver$1;
-  var detune$2 = detune$1;
-  var gain$2 = gain$1;
-  var phaser$2 = phaser$1;
-  var pingPong$2 = pingPong$1;
-  var playbackRate$2 = playbackRate$1;
-  var wahwah$2 = wahwah$1;
+  var biquad$1 = biquad;
+  var bitcrusher$1 = bitcrusher;
+  var chorus$1 = chorus;
+  var convolver$1 = convolver;
+  var detune$1 = detune;
+  var gain$1 = gain;
+  var phaser$1 = phaser;
+  var pingPong$1 = pingPong;
+  var playbackRate$1 = playbackRate;
+  var wahwah$1 = wahwah;
 
-  var effects = {
-  	biquad: biquad$2,
-  	bitcrusher: bitcrusher$2,
-  	chorus: chorus$2,
-  	convolver: convolver$2,
-  	detune: detune$2,
-  	gain: gain$2,
-  	phaser: phaser$2,
-  	pingPong: pingPong$2,
-  	playbackRate: playbackRate$2,
-  	wahwah: wahwah$2
+  var effects$1 = {
+  	biquad: biquad$1,
+  	bitcrusher: bitcrusher$1,
+  	chorus: chorus$1,
+  	convolver: convolver$1,
+  	detune: detune$1,
+  	gain: gain$1,
+  	phaser: phaser$1,
+  	pingPong: pingPong$1,
+  	playbackRate: playbackRate$1,
+  	wahwah: wahwah$1
   };
 
   var random = createCommonjsModule(function (module) {
@@ -3226,10 +3283,10 @@ var webaudioDatabend = (function () {
       return Promise.resolve(audioBuffer);
     };
 
-    this.render = function (buffer, config) {
-      this.previousConfig = this.previousConfig || JSON.parse(JSON.stringify(config));
+    this.render = function (buffer, effectsConfig, bypass = false) {
+      this.previousEffectsConfig = this.previousEffectsConfig || JSON.parse(JSON.stringify(effectsConfig));
 
-      const configIndex = Object.keys(config);
+      const effectsIndex = Object.keys(effectsConfig);
 
       // Create offlineAudioCtx that will house our rendered buffer
       var offlineAudioCtx = new OfflineAudioContext(this.channels, buffer.length * this.channels, this.audioCtx.sampleRate);
@@ -3240,40 +3297,39 @@ var webaudioDatabend = (function () {
       // Set buffer to audio buffer containing image data
       bufferSource.buffer = buffer; 
 
-      if (this.previousConfig !== config) {
-        var activeConfig = configIndex.reduce((acc, cur) => {
-          config[cur].active ? acc[cur] = config[cur] : false; 
+      if (this.previousEffectsConfig !== effectsConfig) {
+        var activeEffects = effectsIndex.reduce((acc, cur) => {
+          effectsConfig[cur].active ? acc[cur] = effects$1[cur] : false; 
           return acc;
         }, {});
-        var activeConfigIndex = Object.keys(activeConfig);
-        this.previousConfig = JSON.parse(JSON.stringify(config));
+        var activeEffectsIndex = Object.keys(activeEffects);
       }
 
-      if (this.previousConfig !== config && activeConfigIndex && activeConfigIndex.length) {
-        activeConfigIndex.forEach((effect) => {
+      if (this.previousEffectsConfig !== effectsConfig && activeEffectsIndex && activeEffectsIndex.length) {
+        activeEffectsIndex.forEach((effect) => {
           if (effect === 'detune' || effect === 'playbackRate') {
-            return effects[effect](bufferSource, config)
+            return effects$1[effect](bufferSource, effectsConfig)
           }
         });
       }
 
       bufferSource.start();
 
-      if (activeConfigIndex && activeConfigIndex.length) {
+      if (activeEffectsIndex && activeEffectsIndex.length) {
         var tuna$$1 = new tuna(offlineAudioCtx);
 
-        var nodes = activeConfigIndex.map((effect) => { 
-          if (effect !== 'detune' && effect !== 'playbackRate' && effect !== 'brush') {
+        var nodes = activeEffectsIndex.map((effect) => { 
+          if (effect !== 'detune' && effect !== 'playbackRate') {
             if (effect === 'biquad') {
-              return effects[effect](bufferSource, offlineAudioCtx, config);
+              return effects$1[effect](bufferSource, offlineAudioCtx, effectsConfig);
             } else {
-              return effects[effect](tuna$$1, config);
+              return effects$1[effect](tuna$$1, effectsConfig);
             }
           }
         }).filter(Boolean);
       }
 
-      if (!nodes || nodes.length === 0) {
+      if (!nodes || nodes.length === 0 || bypass) {
         bufferSource.connect(offlineAudioCtx.destination);
       } else {
         nodes.forEach((node) => { 
@@ -3282,6 +3338,7 @@ var webaudioDatabend = (function () {
         });
       }
 
+      this.previousEffectsConfig = JSON.parse(JSON.stringify(effectsConfig));
       // Kick off the render, callback will contain rendered buffer in event
       return offlineAudioCtx.startRendering();
     };
@@ -5826,105 +5883,169 @@ var webaudioDatabend = (function () {
     default: index
   });
 
-  var config$2 = ( config$1 && config ) || config$1;
-
   var dat = ( dat_gui_module && index ) || dat_gui_module;
 
-  function handleDatGUI(databender, audioCtx, context, overlayContext){
-    var gui = new dat.GUI();
-    Object.keys(config$2).forEach(function (effect) {
-      if (effect === 'frameRate' || effect === 'sampleRate') { 
-        gui.add(config$2, effect);
-      } else if (effect === 'playAudio') {
-        gui.add(config$2, effect)
-          .onFinishChange(function (value) {
-            if (!value) {
-              var bufferSource = audioCtx.createBufferSource();
-              bufferSource.loop = true;
-              databender.render(window.trackBuffer, config$2).then(function (buffer) { 
-                window.prevBufferSource.stop();
-                bufferSource.buffer = buffer;
-                bufferSource.connect(audioCtx.destination);
-                bufferSource.start(audioCtx.currentTime);
-                window.prevBufferSource = bufferSource;
-              });
-            } else {
-              window.prevBufferSource.start(audioCtx.currentTime);
-            }
-          });
+  const { options: options$1, tools: tools$1, effects: effects$2 } = config;
+
+
+
+  const handlers = {
+    handleFill: (e, context, overlayContext, databender) => {
+      databender.bend(databender.imageData)
+        .then((buffer) => databender.render.call(databender, buffer, effects$2))
+        .then((buffer) => databender.draw.call(databender, buffer, context));
+    }
+  };
+
+  function toggleAudio(value, audioCtx) { 
+    if (!value) {
+      const bufferSource = audioCtx.createBufferSource();
+      bufferSource.loop = true;
+      databender.render(window.trackBuffer, effects$2).then(function (buffer) { 
+        window.prevBufferSource.stop();
+        bufferSource.buffer = buffer;
+        bufferSource.connect(audioCtx.destination);
+        bufferSource.start(audioCtx.currentTime);
+        window.prevBufferSource = bufferSource;
+      });
+    } else {
+      window.prevBufferSource.start(audioCtx.currentTime);
+    }
+  }
+
+
+  function toggleTool(tool, value, canvas, context, databender, overlayContext) { 
+    let isDragging = false;
+    let startingPosition;
+   
+    function handleMousedown (e) {
+      console.log('mouse is down');
+      isDragging = true;
+      startingPosition = [e.clientX, e.clientY];
+    }
+    function handleMousemove (e) {
+      if (!startingPosition) {
+        return false;
+      }
+
+      if (isDragging) { 
+        handleDraw(e, context, overlayContext, databender); 
+      }
+    }
+
+    function handleMouseup (e) {
+      if (!(e.clientX === startingPosition[0] && e.clientY === startingPosition[1])) { 
+        isDragging = true;
       } else {
-        var effectTab = gui.addFolder(effect);
-        if (effect === "brush") { 
-          effectTab.add(config$2["brush"], "active").onFinishChange((value) => {
-            if (value) { 
-              canvas.addEventListener('mousemove', (e) => handleDraw(e, context, overlayContext, databender));
-            } else {
-              canvas.removeEventListener('mousemove', handleDraw);
-            }
-          });
-          effectTab.add(config$2["brush"], "size");
-        } else {
-          Object.keys(config$2[effect]).forEach(function (param) {
-            effectTab.add(config$2[effect], param)            
-              .onFinishChange(function (value) { 
-                databender.bend(databender.imageData)
-                  .then((buffer) => databender.render.call(databender, buffer, config$2))
-                  .then((buffer) => databender.draw.call(databender, buffer, context));
-              });
+        console.log('what happened');
+      }
+      isDragging = false;
+      startingPosition = [];
+    }
 
-            if (config$2.playAudio && (param === 'active' || (param !== 'active' && value))) {
-              var bufferSource = audioCtx.createBufferSource();
-              var boundRender = databender.render.bind(databender);
-              bufferSource.loop = true;
+    if (value) { 
+      if (tool === 'Brush') { 
+        canvas.addEventListener('mousedown', handleMousedown);
+        canvas.addEventListener('mousemove', handleMousemove);
+        canvas.addEventListener('mouseup', handleMouseup);
+      } else {
+        const handler = `handle${tool}`;
+        canvas.addEventListener('click', e => handlers[handler](e, context, overlayContext, databender));
+      }
+    } else {
+      if (tool === 'Brush') { 
+        canvas.removeEventListener('mousedown', handleMousedown);
+        canvas.removeEventListener('mousemove', handleMousemove);
+        canvas.removeEventListener('mouseup', handleMouseup);
+      } else {
+        canvas.removeEventListener('click', `handle${tool}`);
+      }
+    }
+  }
 
-              databender.boundRender(window.trackBuffer, config$2).then(function (buffer) { 
-                if (window.prevBufferSource) {
-                  window.prevBufferSource.stop();
-                }
-                bufferSource.buffer = buffer;
-                bufferSource.connect(audioCtx.destination);
-                bufferSource.start(audioCtx.currentTime);
-                window.prevBufferSource = bufferSource;
-              });
+  function handleDatGUI(databender, audioCtx, canvas, context, overlayContext) {
+    const gui = new dat.GUI();
+
+    const optionsTab = gui.addFolder('Options');
+    Object.keys(options$1).forEach(option => {
+      const controller = optionsTab.add(options$1, option);
+
+      if (option === 'playAudio') {
+        controller.onFinishChange(value => toggleAudio(value, audioCtx));
+      }
+    });
+
+    const toolsTab = gui.addFolder('Tools');
+
+    Object.keys(tools$1).forEach(tool => {
+      const toolTab  = toolsTab.addFolder(tool);
+      Object.keys(tools$1[tool]).forEach(param => {
+        const controller = toolTab.add(tools$1[tool], param);
+
+        if (param === 'active') {
+          controller.onFinishChange(value => 
+            toggleTool(tool, value, canvas, context, databender, overlayContext)
+          );}
+      });
+    });
+
+    const effectsTab = gui.addFolder('Effects');
+    Object.keys(effects$2).forEach(effect => {
+      const effectTab = effectsTab.addFolder(effect);
+      Object.keys(effects$2[effect]).forEach(function (param) {
+        effectTab.add(effects$2[effect], param);            
+        if (options$1.playAudio && (param === 'active' || (param !== 'active' && value))) {
+          const bufferSource = audioCtx.createBufferSource();
+          const boundRender = databender.render.bind(databender);
+          bufferSource.loop = true;
+
+          databender.boundRender(window.trackBuffer, options$1, effects$2).then(function (buffer) { 
+            if (window.prevBufferSource) {
+              window.prevBufferSource.stop();
             }
+            bufferSource.buffer = buffer;
+            bufferSource.connect(audioCtx.destination);
+            bufferSource.start(audioCtx.currentTime);
+            window.prevBufferSource = bufferSource;
           });
         }
-      }  });
+      });
+    });
   }
   function renderVideoToCanvas(v, context, databender) {
-    var timer;
-    var time;
+    let timer;
+    let time;
 
     function drawFrame() {
       if(v.paused || v.ended) return false;
-      var databent = databender.bend(v)
-        .then((buffer) => databender.render.call(databender, buffer, config$2))
+      const databent = databender.bend(v)
+        .then((buffer) => databender.render.call(databender, buffer, effects$2))
         .then((buffer) => databender.draw.call(databender, buffer, context));
     }
 
     (function repeat() {
-      time = 1000 / config$2.frameRate;  
+      time = 1000 / options$1.frameRate;  
       drawFrame(v, context);
       timer = setTimeout(repeat, time);
     }());
   }
 
   function handleImageUpload (e, context, databender) {
-    var reader = new FileReader();
+    const reader = new FileReader();
     reader.onload = function (e) {
-      var img = new Image();
+      const img = new Image();
       img.onload = function () {
         databender.bend(img)
-        .then((buffer) => databender.render.call(databender, buffer, config$2))
-        .then((buffer) => databender.draw.call(databender, buffer, context));
+          .then((buffer) => databender.render.call(databender, buffer, effects$2))
+          .then((buffer) => databender.draw.call(databender, buffer, context));
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(e);
   }
   function handleVideoUpload(e, canvas, databender){
-    var reader = new FileReader();
-    var video = document.createElement('video');
+    const reader = new FileReader();
+    const video = document.createElement('video');
 
     video.addEventListener('play', function () {
       renderVideoToCanvas(this, canvas, databender);
@@ -5946,11 +6067,11 @@ var webaudioDatabend = (function () {
       .then((buffer) => window.trackBuffer = buffer)
       .then((buffer) => {
         audioCtx.decodeAudioData(buffer).then((decodedData) => {
-          databender.render(decodedData, config$2).then(buffer => { 
-            var bufferSource = audioCtx.createBufferSource();
+          databender.render(decodedData, effects$2).then(buffer => { 
+            const bufferSource = audioCtx.createBufferSource();
             bufferSource.buffer = buffer;
             bufferSource.connect(audioCtx.destination);
-            if (config$2.playAudio) {
+            if (options$1.playAudio) {
               bufferSource.start(0);
             }
             window.prevBufferSource = bufferSource; 
@@ -5962,10 +6083,10 @@ var webaudioDatabend = (function () {
   }
 
   function getFileType(file) {
-    var imageFileTypes = ['jpg', 'png', 'bmp', 'jpeg'];
-    var videoFileTypes = ['mp4', 'webm'];
-    var fileExtension = file.name.split('.')[1];
-    var fileType;
+    const imageFileTypes = ['jpg', 'png', 'bmp', 'jpeg'];
+    const videoFileTypes = ['mp4', 'webm'];
+    const fileExtension = file.name.split('.')[1];
+    let fileType;
 
     if (imageFileTypes.indexOf(fileExtension) >= 0) { 
       fileType = 'image';
@@ -5979,7 +6100,7 @@ var webaudioDatabend = (function () {
   }
 
   function handleFileUpload(file, context, databender) {
-    var type = getFileType(file);
+    const type = getFileType(file);
     switch (type) { 
       case 'image': 
         return handleImageUpload(file, context, databender);
@@ -5999,21 +6120,20 @@ var webaudioDatabend = (function () {
   }
 
   function handleDraw(e, context, overlayContext, databender) { 
-    overlayContext.clearRect(0, 0, canvas.width, canvas.height);
     const { clientX, clientY } = e;
-    const drawX = clientX - Math.floor(parseInt(config$2.brush.size)/2) < 0 
+    const { size: brushSize } = tools$1.Brush;
+    const drawX = clientX - Math.floor(brushSize/2) < 0 
       ? 0 
-      : clientX - Math.floor(config$2.brush.size/2); 
-    const drawY = clientY - Math.floor(parseInt(config$2.brush.size/2)) < 0 
+      : clientX - Math.floor(brushSize/2); 
+    const drawY = clientY - Math.floor(parseInt(brushSize/2)) < 0 
       ? 0 
-      : clientY - Math.floor(config$2.brush.size/2); 
-    const imageSubset = context.getImageData(drawX, drawY, config$2.brush.size, config$2.brush.size);
+      : clientY - Math.floor(brushSize/2); 
+    const imageSubset = context.getImageData(drawX, drawY, brushSize, brushSize);
 
     databender.bend(imageSubset)
-      .then((buffer) => databender.render.call(databender, buffer, config$2))
+      .then((buffer) => databender.render.call(databender, buffer, effects$2))
       .then((buffer) => databender.draw.call(databender, buffer, overlayContext, drawX, drawY));
   }
-
 
   function main () {
     const audioCtx = new AudioContext();
@@ -6022,16 +6142,16 @@ var webaudioDatabend = (function () {
     const databender = new databend(audioCtx, overlayCanvas);
     loadTrack(audioCtx, databender);
     const upload = document.querySelector('.upload');
-    var fileUpload = document.querySelector('input[type=file]');
+    const fileUpload = document.querySelector('input[type=file]');
     upload.ondragover = function () { this.classList.add('hover'); return false; };
     upload.ondragend = function () { this.classList.remove('hover'); return false; };
     upload.ondrop = function (e) {
       e.preventDefault();
       document.querySelector('.upload').style.display = 'none';
-      var files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
+      const files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
       handleFileUpload(files[0], context, databender);
     };
-    handleDatGUI(databender, audioCtx, context, overlayContext);
+    handleDatGUI(databender, audioCtx, canvas, context, overlayContext);
   }
   main();
 
