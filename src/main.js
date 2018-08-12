@@ -41,7 +41,7 @@ function handleDatGUI(databender, audioCtx, context, overlayContext){
             .onFinishChange(function (value) { 
               databender.bend(databender.imageData)
                 .then((buffer) => databender.render.call(databender, buffer, config))
-                .then((buffer) => databender.draw.call(databender, buffer, overlayContext))
+                .then((buffer) => databender.draw.call(databender, buffer, context))
             });
 
           if (config.playAudio && (param === 'active' || (param !== 'active' && value))) {

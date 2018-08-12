@@ -14,7 +14,7 @@ var webaudioDatabend = (function () {
   const pingPong = {"active":false,"feedback":0.3,"wetLevel":0.5,"delayTimeLeft":10,"delayTimeRight":10};
   const phaser = {"active":false,"rate":1.2,"depth":0.4,"feedback":0.5,"stereoPhase":10,"baseModulationFrequency":500};
   const wahwah = {"active":false,"automode":true,"baseFrequency":0.5,"excursionOctaves":2,"sweep":0.2,"resonance":10,"sensitivity":0.5};
-  const brush = {"active":false,"size":10};
+  const brush = {"active":false,"size":48};
   var config = {
   	playAudio: playAudio,
   	frameRate: frameRate,
@@ -3206,8 +3206,8 @@ var webaudioDatabend = (function () {
     this.bend = function (image) {
       if (image instanceof Image || image instanceof HTMLVideoElement) {
         var canvas = document.createElement('canvas');
-        canvas.width = 1280;
-        canvas.height = 768;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
         var context = canvas.getContext('2d');
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
         var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -5869,7 +5869,7 @@ var webaudioDatabend = (function () {
               .onFinishChange(function (value) { 
                 databender.bend(databender.imageData)
                   .then((buffer) => databender.render.call(databender, buffer, config$2))
-                  .then((buffer) => databender.draw.call(databender, buffer, overlayContext));
+                  .then((buffer) => databender.draw.call(databender, buffer, context));
               });
 
             if (config$2.playAudio && (param === 'active' || (param !== 'active' && value))) {

@@ -12,8 +12,8 @@ module.exports = function (audioCtx) {
   this.bend = function (image) {
     if (image instanceof Image || image instanceof HTMLVideoElement) {
       var canvas = document.createElement('canvas');
-      canvas.width = 1280;
-      canvas.height = 768;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
       var context = canvas.getContext('2d');
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
       var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
