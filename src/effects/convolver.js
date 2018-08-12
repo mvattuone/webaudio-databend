@@ -1,4 +1,4 @@
-exports.convolver = (tuna, config) => {
+module.exports = (tuna, config) => {
   return new tuna.Convolver({
     highCut: config.convolver.highCut,
     lowCut: config.convolver.lowCut,
