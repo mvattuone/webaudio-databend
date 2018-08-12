@@ -3197,10 +3197,9 @@ var webaudioDatabend = (function () {
   window.random = random();
 
   // Create a Databender instance
-  var databend = function (audioCtx, renderCanvas) {
+  var databend = function (audioCtx) {
     // Create an AudioContext or use existing one
     this.audioCtx = audioCtx ? audioCtx : new AudioContext();
-    this.renderCanvas = renderCanvas;
 
     this.channels = 1; 
 
@@ -3287,7 +3286,7 @@ var webaudioDatabend = (function () {
       return offlineAudioCtx.startRendering();
     };
 
-    this.draw = function (buffer, x = 0, y = 0) {
+    this.draw = function (buffer, context, x = 0, y = 0) {
 
       // Get buffer data
       var bufferData = buffer.getChannelData(0);
@@ -3303,7 +3302,7 @@ var webaudioDatabend = (function () {
       // @see https://developer.mozilla.org/en-US/docs/Web/API/ImageData
       var transformedImage = new ImageData(clampedDataArray, this.imageData.width, this.imageData.height);
 
-      this.renderCanvas.getContext('2d').putImageData(transformedImage, x, y);
+      context.putImageData(transformedImage, x, y);
     };
 
 
@@ -5831,7 +5830,7 @@ var webaudioDatabend = (function () {
 
   var dat = ( dat_gui_module && index ) || dat_gui_module;
 
-  function handleDatGUI(databender, audioCtx){
+  function handleDatGUI(databender, audioCtx, context, overlayContext){
     var gui = new dat.GUI();
     Object.keys(config$2).forEach(function (effect) {
       if (effect === 'frameRate' || effect === 'sampleRate') { 
@@ -5858,10 +5857,6 @@ var webaudioDatabend = (function () {
         if (effect === "brush") { 
           effectTab.add(config$2["brush"], "active").onFinishChange((value) => {
             if (value) { 
-              const canvas = document.querySelector('#canvas');
-              const context = canvas.getContext('2d');
-              const overlayCanvas = document.querySelector('#overlay');
-              const overlayContext = overlayCanvas.getContext('2d');
               canvas.addEventListener('mousemove', (e) => handleDraw(e, context, overlayContext, databender));
             } else {
               canvas.removeEventListener('mousemove', handleDraw);
@@ -5874,7 +5869,7 @@ var webaudioDatabend = (function () {
               .onFinishChange(function (value) { 
                 databender.bend(databender.imageData)
                   .then((buffer) => databender.render.call(databender, buffer, config$2))
-                  .then((buffer) => databender.draw.call(databender, buffer));
+                  .then((buffer) => databender.draw.call(databender, buffer, overlayContext));
               });
 
             if (config$2.playAudio && (param === 'active' || (param !== 'active' && value))) {
@@ -5896,7 +5891,7 @@ var webaudioDatabend = (function () {
         }
       }  });
   }
-  function renderVideoToCanvas(v, canvas, databender) {
+  function renderVideoToCanvas(v, context, databender) {
     var timer;
     var time;
 
@@ -5904,24 +5899,24 @@ var webaudioDatabend = (function () {
       if(v.paused || v.ended) return false;
       var databent = databender.bend(v)
         .then((buffer) => databender.render.call(databender, buffer, config$2))
-        .then((buffer) => databender.draw.call(databender, buffer));
+        .then((buffer) => databender.draw.call(databender, buffer, context));
     }
 
     (function repeat() {
       time = 1000 / config$2.frameRate;  
-      drawFrame(v, canvas);
+      drawFrame(v, context);
       timer = setTimeout(repeat, time);
     }());
   }
 
-  function handleImageUpload (e, canvas, databender) {
+  function handleImageUpload (e, context, databender) {
     var reader = new FileReader();
     reader.onload = function (e) {
       var img = new Image();
       img.onload = function () {
         databender.bend(img)
         .then((buffer) => databender.render.call(databender, buffer, config$2))
-        .then((buffer) => databender.draw.call(databender, buffer));
+        .then((buffer) => databender.draw.call(databender, buffer, context));
       };
       img.src = e.target.result;
     };
@@ -5983,13 +5978,13 @@ var webaudioDatabend = (function () {
     return fileType;
   }
 
-  function handleFileUpload(file, canvas, databender) {
+  function handleFileUpload(file, context, databender) {
     var type = getFileType(file);
     switch (type) { 
       case 'image': 
-        return handleImageUpload(file, canvas, databender);
+        return handleImageUpload(file, context, databender);
       case 'video':
-        return handleVideoUpload(file, canvas, databender);
+        return handleVideoUpload(file, context, databender);
       default:
         alert('File Type is not supported');
         return false;
@@ -6016,7 +6011,7 @@ var webaudioDatabend = (function () {
 
     databender.bend(imageSubset)
       .then((buffer) => databender.render.call(databender, buffer, config$2))
-      .then((buffer) => databender.draw.call(databender, buffer, drawX, drawY));
+      .then((buffer) => databender.draw.call(databender, buffer, overlayContext, drawX, drawY));
   }
 
 
@@ -6024,7 +6019,7 @@ var webaudioDatabend = (function () {
     const audioCtx = new AudioContext();
     const { canvas, context } = prepareCanvas('#canvas');
     const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
-    const databender = new databend(audioCtx, canvas, overlayCanvas);
+    const databender = new databend(audioCtx, overlayCanvas);
     loadTrack(audioCtx, databender);
     const upload = document.querySelector('.upload');
     var fileUpload = document.querySelector('input[type=file]');
@@ -6034,9 +6029,9 @@ var webaudioDatabend = (function () {
       e.preventDefault();
       document.querySelector('.upload').style.display = 'none';
       var files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
-      handleFileUpload(files[0], canvas, databender);
+      handleFileUpload(files[0], context, databender);
     };
-    handleDatGUI(databender, audioCtx);
+    handleDatGUI(databender, audioCtx, context, overlayContext);
   }
   main();
 

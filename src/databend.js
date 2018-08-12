@@ -1,12 +1,11 @@
-/ar Tuna = require('tunajs'); 
+var Tuna = require('tunajs'); 
 var effects = require('./effects');
 window.random = require('random-js')();
 
 // Create a Databender instance
-module.exports = function (audioCtx, renderCanvas, overlayCanvas) {
+module.exports = function (audioCtx) {
   // Create an AudioContext or use existing one
   this.audioCtx = audioCtx ? audioCtx : new AudioContext();
-  this.overlayCanvas = overlayCanvas;
 
   this.channels = 1; 
 
@@ -93,7 +92,7 @@ module.exports = function (audioCtx, renderCanvas, overlayCanvas) {
     return offlineAudioCtx.startRendering();
   };
 
-  this.draw = function (buffer, x = 0, y = 0) {
+  this.draw = function (buffer, context, x = 0, y = 0) {
 
     // Get buffer data
     var bufferData = buffer.getChannelData(0);
@@ -109,7 +108,7 @@ module.exports = function (audioCtx, renderCanvas, overlayCanvas) {
     // @see https://developer.mozilla.org/en-US/docs/Web/API/ImageData
     var transformedImage = new ImageData(clampedDataArray, this.imageData.width, this.imageData.height);
 
-    this.overlayCanvas.getContext('2d').putImageData(transformedImage, x, y);
+    context.putImageData(transformedImage, x, y);
   };
 
 

@@ -2,7 +2,7 @@ const config = require('./config.json');
 const Databender = require('./databend.js');
 const dat = require('dat.gui');
 
-function handleDatGUI(databender, audioCtx){
+function handleDatGUI(databender, audioCtx, context, overlayContext){
   var gui = new dat.GUI();
   Object.keys(config).forEach(function (effect) {
     if (effect === 'frameRate' || effect === 'sampleRate') { 
@@ -29,10 +29,6 @@ function handleDatGUI(databender, audioCtx){
       if (effect === "brush") { 
         effectTab.add(config["brush"], "active").onFinishChange((value) => {
           if (value) { 
-            const canvas = document.querySelector('#canvas');
-            const context = canvas.getContext('2d');
-            const overlayCanvas = document.querySelector('#overlay');
-            const overlayContext = overlayCanvas.getContext('2d');
             canvas.addEventListener('mousemove', (e) => handleDraw(e, context, overlayContext, databender));
           } else {
             canvas.removeEventListener('mousemove', handleDraw);
@@ -45,7 +41,7 @@ function handleDatGUI(databender, audioCtx){
             .onFinishChange(function (value) { 
               databender.bend(databender.imageData)
                 .then((buffer) => databender.render.call(databender, buffer, config))
-                .then((buffer) => databender.draw.call(databender, buffer))
+                .then((buffer) => databender.draw.call(databender, buffer, overlayContext))
             });
 
           if (config.playAudio && (param === 'active' || (param !== 'active' && value))) {
@@ -69,7 +65,7 @@ function handleDatGUI(databender, audioCtx){
   });
 };
 
-function renderVideoToCanvas(v, canvas, databender) {
+function renderVideoToCanvas(v, context, databender) {
   var timer;
   var time;
 
@@ -77,24 +73,24 @@ function renderVideoToCanvas(v, canvas, databender) {
     if(v.paused || v.ended) return false;
     var databent = databender.bend(v)
       .then((buffer) => databender.render.call(databender, buffer, config))
-      .then((buffer) => databender.draw.call(databender, buffer))
+      .then((buffer) => databender.draw.call(databender, buffer, context))
   }
 
   (function repeat() {
     time = 1000 / config.frameRate;  
-    drawFrame(v, canvas);
+    drawFrame(v, context);
     timer = setTimeout(repeat, time);
   }());
 }
 
-function handleImageUpload (e, canvas, databender) {
+function handleImageUpload (e, context, databender) {
   var reader = new FileReader();
   reader.onload = function (e) {
     var img = new Image();
     img.onload = function () {
       databender.bend(img)
       .then((buffer) => databender.render.call(databender, buffer, config))
-      .then((buffer) => databender.draw.call(databender, buffer))
+      .then((buffer) => databender.draw.call(databender, buffer, context))
     };
     img.src = e.target.result;
   }
@@ -159,13 +155,13 @@ function getFileType(file) {
 };
 
 
-function handleFileUpload(file, canvas, databender) {
+function handleFileUpload(file, context, databender) {
   var type = getFileType(file);
   switch (type) { 
     case 'image': 
-      return handleImageUpload(file, canvas, databender);
+      return handleImageUpload(file, context, databender);
     case 'video':
-      return handleVideoUpload(file, canvas, databender);
+      return handleVideoUpload(file, context, databender);
     default:
       alert('File Type is not supported');
       return false;
@@ -193,7 +189,7 @@ function handleDraw(e, context, overlayContext, databender) {
 
   databender.bend(imageSubset)
     .then((buffer) => databender.render.call(databender, buffer, config))
-    .then((buffer) => databender.draw.call(databender, buffer, drawX, drawY))
+    .then((buffer) => databender.draw.call(databender, buffer, overlayContext, drawX, drawY))
 }
 
 
@@ -201,7 +197,7 @@ function main () {
   const audioCtx = new AudioContext();
   const { canvas, context } = prepareCanvas('#canvas');
   const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
-  const databender = new Databender(audioCtx, canvas, overlayCanvas);
+  const databender = new Databender(audioCtx, overlayCanvas);
   loadTrack(audioCtx, databender);
   const upload = document.querySelector('.upload');
   var fileUpload = document.querySelector('input[type=file]');
@@ -211,9 +207,9 @@ function main () {
     e.preventDefault();
     document.querySelector('.upload').style.display = 'none';
     var files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
-    handleFileUpload(files[0], canvas, databender);
+    handleFileUpload(files[0], context, databender);
   }
-  handleDatGUI(databender, audioCtx);
+  handleDatGUI(databender, audioCtx, context, overlayContext);
 };
 
 main();
