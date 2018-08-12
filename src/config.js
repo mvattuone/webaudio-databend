@@ -18,7 +18,7 @@ const effects = {
     active: false,
     bits: 4,
     normfreq: 0.1,
-    bufferSize: 4096
+    bufferSize: 256
   },
   convolver: {
     active: false,

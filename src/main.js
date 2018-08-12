@@ -6,7 +6,7 @@ const handlers = {
   handleFill: (e, context, overlayContext, databender) => {
     databender.bend(databender.imageData)
       .then((buffer) => databender.render.call(databender, buffer, effects))
-      .then((buffer) => databender.draw.call(databender, buffer, context))
+      .then((buffer) => databender.draw.call(databender, buffer, overlayContext))
   }
 };
 
@@ -26,59 +26,59 @@ function toggleAudio(value, audioCtx) {
   }
 }
 
+let isDragging = false;
+let startingPosition;
 
-function toggleTool(tool, value, canvas, context, databender, overlayContext) { 
-  let isDragging = false;
-  let startingPosition;
- 
-  function handleMousedown (e) {
-    console.log('mouse is down');
-    isDragging = true;
-    startingPosition = [e.clientX, e.clientY];
-  };
 
-  function handleMousemove (e) {
-    if (!startingPosition) {
-      return false;
-    }
+const handleMousedown = function (e) {
+  isDragging = true;
+  startingPosition = [e.clientX, e.clientY];
+};
 
-    if (isDragging) { 
-      handleDraw(e, context, overlayContext, databender); 
-    }
+const handleMousemove = function (context, overlayContext, databender, e) {
+  if (!startingPosition) {
+    return false;
   }
 
-  function handleMouseup (e) {
-    if (!(e.clientX === startingPosition[0] && e.clientY === startingPosition[1])) { 
-      isDragging = true
-    } else {
-      console.log('what happened');
-    }
-    isDragging = false;
-    startingPosition = [];
+  if (isDragging) { 
+    handleDraw(e, context, overlayContext, databender); 
   }
+}
 
+const handleMouseup = function (e) {
+  if (!(e.clientX === startingPosition[0] && e.clientY === startingPosition[1])) { 
+    isDragging = true
+  } else {
+    console.log('what happened');
+  }
+  isDragging = false;
+  startingPosition = [];
+}
+
+function toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove) { 
+  const handlerKey = `handle${tool}`;
   if (value) { 
     if (tool === 'Brush') { 
       canvas.addEventListener('mousedown', handleMousedown);
-      canvas.addEventListener('mousemove', handleMousemove)
+      canvas.addEventListener('mousemove', boundHandleMousemove);
       canvas.addEventListener('mouseup', handleMouseup);
     } else {
-      const handler = `handle${tool}`;
-      canvas.addEventListener('click', e => handlers[handler](e, context, overlayContext, databender));
+      canvas.addEventListener('click', handler.bind(null, context, overlayContext, databender));
     }
   } else {
     if (tool === 'Brush') { 
       canvas.removeEventListener('mousedown', handleMousedown);
-      canvas.removeEventListener('mousemove', handleMousemove)
+      canvas.removeEventListener('mousemove', boundHandleMousemove)
       canvas.removeEventListener('mouseup', handleMouseup);
     } else {
-      canvas.removeEventListener('click', `handle${tool}`);
+      canvas.removeEventListener('click', handler);
     }
   }
 }
 
 function handleDatGUI(databender, audioCtx, canvas, context, overlayContext) {
   const gui = new dat.GUI();
+  const boundHandleMousemove = handleMousemove.bind(null, context, overlayContext, databender);
 
   const optionsTab = gui.addFolder('Options');
   Object.keys(options).forEach(option => {
@@ -97,9 +97,10 @@ function handleDatGUI(databender, audioCtx, canvas, context, overlayContext) {
       const controller = toolTab.add(tools[tool], param)
 
       if (param === 'active') {
-        controller.onFinishChange(value => 
-          toggleTool(tool, value, canvas, context, databender, overlayContext)
-        )}
+        controller.onFinishChange(value => {
+          toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove)
+        });
+    }
     });
   });
 

@@ -11,10 +11,6 @@ var webaudioDatabend = (function () {
       active: false,
       size: 48
     },
-    Eraser: {
-      active: false,
-      size: 48
-    },
     Fill: {
       active: false
     }
@@ -25,7 +21,7 @@ var webaudioDatabend = (function () {
       active: false,
       bits: 4,
       normfreq: 0.1,
-      bufferSize: 4096
+      bufferSize: 256
     },
     convolver: {
       active: false,
@@ -2428,7 +2424,7 @@ var webaudioDatabend = (function () {
     });
   };
 
-  var convolver_1 = (tuna, config) => {
+  var convolver = (tuna, config) => {
     return new tuna.Convolver({
       highCut: config.convolver.highCut,
       lowCut: config.convolver.lowCut,
@@ -2437,10 +2433,6 @@ var webaudioDatabend = (function () {
       level: config.convolver.level,
       impulse: config.convolver.impulse
     });
-  };
-
-  var convolver = {
-  	convolver: convolver_1
   };
 
   var detune = (bufferSource, config) => {
@@ -5887,16 +5879,6 @@ var webaudioDatabend = (function () {
 
   const { options: options$1, tools: tools$1, effects: effects$2 } = config;
 
-
-
-  const handlers = {
-    handleFill: (e, context, overlayContext, databender) => {
-      databender.bend(databender.imageData)
-        .then((buffer) => databender.render.call(databender, buffer, effects$2))
-        .then((buffer) => databender.draw.call(databender, buffer, context));
-    }
-  };
-
   function toggleAudio(value, audioCtx) { 
     if (!value) {
       const bufferSource = audioCtx.createBufferSource();
@@ -5913,58 +5895,58 @@ var webaudioDatabend = (function () {
     }
   }
 
+  let isDragging = false;
+  let startingPosition;
 
-  function toggleTool(tool, value, canvas, context, databender, overlayContext) { 
-    let isDragging = false;
-    let startingPosition;
-   
-    function handleMousedown (e) {
-      console.log('mouse is down');
+
+  const handleMousedown = function (e) {
+    isDragging = true;
+    startingPosition = [e.clientX, e.clientY];
+  };
+
+  const handleMousemove = function (context, overlayContext, databender, e) {
+    if (!startingPosition) {
+      return false;
+    }
+
+    if (isDragging) { 
+      handleDraw(e, context, overlayContext, databender); 
+    }
+  };
+
+  const handleMouseup = function (e) {
+    if (!(e.clientX === startingPosition[0] && e.clientY === startingPosition[1])) { 
       isDragging = true;
-      startingPosition = [e.clientX, e.clientY];
+    } else {
+      console.log('what happened');
     }
-    function handleMousemove (e) {
-      if (!startingPosition) {
-        return false;
-      }
+    isDragging = false;
+    startingPosition = [];
+  };
 
-      if (isDragging) { 
-        handleDraw(e, context, overlayContext, databender); 
-      }
-    }
-
-    function handleMouseup (e) {
-      if (!(e.clientX === startingPosition[0] && e.clientY === startingPosition[1])) { 
-        isDragging = true;
-      } else {
-        console.log('what happened');
-      }
-      isDragging = false;
-      startingPosition = [];
-    }
-
+  function toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove) { 
     if (value) { 
       if (tool === 'Brush') { 
         canvas.addEventListener('mousedown', handleMousedown);
-        canvas.addEventListener('mousemove', handleMousemove);
+        canvas.addEventListener('mousemove', boundHandleMousemove);
         canvas.addEventListener('mouseup', handleMouseup);
       } else {
-        const handler = `handle${tool}`;
-        canvas.addEventListener('click', e => handlers[handler](e, context, overlayContext, databender));
+        canvas.addEventListener('click', handler.bind(null, context, overlayContext, databender));
       }
     } else {
       if (tool === 'Brush') { 
         canvas.removeEventListener('mousedown', handleMousedown);
-        canvas.removeEventListener('mousemove', handleMousemove);
+        canvas.removeEventListener('mousemove', boundHandleMousemove);
         canvas.removeEventListener('mouseup', handleMouseup);
       } else {
-        canvas.removeEventListener('click', `handle${tool}`);
+        canvas.removeEventListener('click', handler);
       }
     }
   }
 
   function handleDatGUI(databender, audioCtx, canvas, context, overlayContext) {
     const gui = new dat.GUI();
+    const boundHandleMousemove = handleMousemove.bind(null, context, overlayContext, databender);
 
     const optionsTab = gui.addFolder('Options');
     Object.keys(options$1).forEach(option => {
@@ -5983,9 +5965,10 @@ var webaudioDatabend = (function () {
         const controller = toolTab.add(tools$1[tool], param);
 
         if (param === 'active') {
-          controller.onFinishChange(value => 
-            toggleTool(tool, value, canvas, context, databender, overlayContext)
-          );}
+          controller.onFinishChange(value => {
+            toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove);
+          });
+      }
       });
     });
 
