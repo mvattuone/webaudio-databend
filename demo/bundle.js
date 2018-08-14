@@ -5879,6 +5879,14 @@ var webaudioDatabend = (function () {
 
   const { options: options$1, tools: tools$1, effects: effects$2 } = config;
 
+
+
+  const handleFill = function (context, overlayContext, databender, e) {
+      databender.bend(databender.imageData)
+        .then((buffer) => databender.render.call(databender, buffer, effects$2))
+        .then((buffer) => databender.draw.call(databender, buffer, overlayContext));
+  };
+
   function toggleAudio(value, audioCtx) { 
     if (!value) {
       const bufferSource = audioCtx.createBufferSource();
@@ -5924,14 +5932,14 @@ var webaudioDatabend = (function () {
     startingPosition = [];
   };
 
-  function toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove) { 
+  function toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove, boundHandleFill) { 
     if (value) { 
       if (tool === 'Brush') { 
         canvas.addEventListener('mousedown', handleMousedown);
         canvas.addEventListener('mousemove', boundHandleMousemove);
         canvas.addEventListener('mouseup', handleMouseup);
       } else {
-        canvas.addEventListener('click', handler.bind(null, context, overlayContext, databender));
+        canvas.addEventListener('click', boundHandleFill);
       }
     } else {
       if (tool === 'Brush') { 
@@ -5939,7 +5947,7 @@ var webaudioDatabend = (function () {
         canvas.removeEventListener('mousemove', boundHandleMousemove);
         canvas.removeEventListener('mouseup', handleMouseup);
       } else {
-        canvas.removeEventListener('click', handler);
+        canvas.removeEventListener('click', boundHandleFill);
       }
     }
   }
@@ -5960,13 +5968,14 @@ var webaudioDatabend = (function () {
     const toolsTab = gui.addFolder('Tools');
 
     Object.keys(tools$1).forEach(tool => {
+      const boundHandleFill = handleFill.bind(null, context, overlayContext, databender);
       const toolTab  = toolsTab.addFolder(tool);
       Object.keys(tools$1[tool]).forEach(param => {
         const controller = toolTab.add(tools$1[tool], param);
 
         if (param === 'active') {
           controller.onFinishChange(value => {
-            toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove);
+            toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove, boundHandleFill);
           });
       }
       });
@@ -6102,15 +6111,16 @@ var webaudioDatabend = (function () {
     return { canvas, context };
   }
 
+  function getDrawCoordinate(origin, brushSize) { 
+    const drawCoordinate = origin - Math.floor(brushSize/2);
+    return drawCoordinate < 0 ? 0 : drawCoordinate;
+  }
+
   function handleDraw(e, context, overlayContext, databender) { 
     const { clientX, clientY } = e;
-    const { size: brushSize } = tools$1.Brush;
-    const drawX = clientX - Math.floor(brushSize/2) < 0 
-      ? 0 
-      : clientX - Math.floor(brushSize/2); 
-    const drawY = clientY - Math.floor(parseInt(brushSize/2)) < 0 
-      ? 0 
-      : clientY - Math.floor(brushSize/2); 
+    const { size } = tools$1.Brush;
+    const drawX = getDrawCoordinate(clientX, size);
+    const drawY = getDrawCoordinate(clientY, size);
     const imageSubset = context.getImageData(drawX, drawY, brushSize, brushSize);
 
     databender.bend(imageSubset)

@@ -2,13 +2,11 @@ const { options, tools, effects } = require('./config');
 const Databender = require('./databend.js');
 const dat = require('dat.gui');
 
-const handlers = {
-  handleFill: (e, context, overlayContext, databender) => {
+const handleFill = function (context, overlayContext, databender, e) {
     databender.bend(databender.imageData)
       .then((buffer) => databender.render.call(databender, buffer, effects))
       .then((buffer) => databender.draw.call(databender, buffer, overlayContext))
-  }
-};
+}
 
 function toggleAudio(value, audioCtx) { 
   if (!value) {
@@ -55,7 +53,7 @@ const handleMouseup = function (e) {
   startingPosition = [];
 }
 
-function toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove) { 
+function toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove, boundHandleFill) { 
   const handlerKey = `handle${tool}`;
   if (value) { 
     if (tool === 'Brush') { 
@@ -63,7 +61,7 @@ function toggleTool(tool, value, canvas, context, databender, overlayContext, bo
       canvas.addEventListener('mousemove', boundHandleMousemove);
       canvas.addEventListener('mouseup', handleMouseup);
     } else {
-      canvas.addEventListener('click', handler.bind(null, context, overlayContext, databender));
+      canvas.addEventListener('click', boundHandleFill);
     }
   } else {
     if (tool === 'Brush') { 
@@ -71,7 +69,7 @@ function toggleTool(tool, value, canvas, context, databender, overlayContext, bo
       canvas.removeEventListener('mousemove', boundHandleMousemove)
       canvas.removeEventListener('mouseup', handleMouseup);
     } else {
-      canvas.removeEventListener('click', handler);
+      canvas.removeEventListener('click', boundHandleFill);
     }
   }
 }
@@ -92,13 +90,14 @@ function handleDatGUI(databender, audioCtx, canvas, context, overlayContext) {
   const toolsTab = gui.addFolder('Tools');
 
   Object.keys(tools).forEach(tool => {
+    const boundHandleFill = handleFill.bind(null, context, overlayContext, databender)
     const toolTab  = toolsTab.addFolder(tool);
     Object.keys(tools[tool]).forEach(param => {
       const controller = toolTab.add(tools[tool], param)
 
       if (param === 'active') {
         controller.onFinishChange(value => {
-          toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove)
+          toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove, boundHandleFill)
         });
     }
     });
@@ -239,15 +238,16 @@ function prepareCanvas(id) {
   return { canvas, context };
 }
 
+function getDrawCoordinate(origin, brushSize) { 
+  const drawCoordinate = origin - Math.floor(brushSize/2);
+  return drawCoordinate < 0 ? 0 : drawCoordinate;
+}
+
 function handleDraw(e, context, overlayContext, databender) { 
   const { clientX, clientY } = e;
-  const { size: brushSize } = tools.Brush;
-  const drawX = clientX - Math.floor(brushSize/2) < 0 
-    ? 0 
-    : clientX - Math.floor(brushSize/2); 
-  const drawY = clientY - Math.floor(parseInt(brushSize/2)) < 0 
-    ? 0 
-    : clientY - Math.floor(brushSize/2); 
+  const { size } = tools.Brush;
+  const drawX = getDrawCoordinate(clientX, size);
+  const drawY = getDrawCoordinate(clientY, size);
   const imageSubset = context.getImageData(drawX, drawY, brushSize, brushSize);
 
   databender.bend(imageSubset)
