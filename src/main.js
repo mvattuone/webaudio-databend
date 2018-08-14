@@ -2,12 +2,6 @@ const { options, tools, effects } = require('./config');
 const Databender = require('./databend.js');
 const dat = require('dat.gui');
 
-const handleFill = function (context, overlayContext, databender, e) {
-    databender.bend(databender.imageData)
-      .then((buffer) => databender.render.call(databender, buffer, effects))
-      .then((buffer) => databender.draw.call(databender, buffer, overlayContext))
-}
-
 function toggleAudio(value, audioCtx) { 
   if (!value) {
     const bufferSource = audioCtx.createBufferSource();
@@ -253,6 +247,12 @@ function handleDraw(e, context, overlayContext, databender) {
   databender.bend(imageSubset)
     .then((buffer) => databender.render.call(databender, buffer, effects))
     .then((buffer) => databender.draw.call(databender, buffer, overlayContext, drawX, drawY))
+}
+
+function handleFill(context, overlayContext, databender, e) {
+  databender.bend(databender.imageData)
+    .then((buffer) => databender.render.call(databender, buffer, effects))
+    .then((buffer) => databender.draw.call(databender, buffer, overlayContext))
 }
 
 function main () {

@@ -5881,12 +5881,6 @@ var webaudioDatabend = (function () {
 
 
 
-  const handleFill = function (context, overlayContext, databender, e) {
-      databender.bend(databender.imageData)
-        .then((buffer) => databender.render.call(databender, buffer, effects$2))
-        .then((buffer) => databender.draw.call(databender, buffer, overlayContext));
-  };
-
   function toggleAudio(value, audioCtx) { 
     if (!value) {
       const bufferSource = audioCtx.createBufferSource();
@@ -6126,6 +6120,12 @@ var webaudioDatabend = (function () {
     databender.bend(imageSubset)
       .then((buffer) => databender.render.call(databender, buffer, effects$2))
       .then((buffer) => databender.draw.call(databender, buffer, overlayContext, drawX, drawY));
+  }
+
+  function handleFill(context, overlayContext, databender, e) {
+    databender.bend(databender.imageData)
+      .then((buffer) => databender.render.call(databender, buffer, effects$2))
+      .then((buffer) => databender.draw.call(databender, buffer, overlayContext));
   }
 
   function main () {
