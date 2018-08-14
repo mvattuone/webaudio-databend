@@ -5975,7 +5975,7 @@ var webaudioDatabend = (function () {
           controller.onFinishChange(value => {
             toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove, boundHandleFill);
           });
-      }
+        }
       });
     });
 
@@ -6067,7 +6067,6 @@ var webaudioDatabend = (function () {
         console.error(`Error while loading: ${err}`);
       });
   }
-
   function getFileType(file) {
     const imageFileTypes = ['jpg', 'png', 'bmp', 'jpeg'];
     const videoFileTypes = ['mp4', 'webm'];
@@ -6084,7 +6083,6 @@ var webaudioDatabend = (function () {
 
     return fileType;
   }
-
   function handleFileUpload(file, context, databender) {
     const type = getFileType(file);
     switch (type) { 
@@ -6126,12 +6124,7 @@ var webaudioDatabend = (function () {
     databender.bend(databender.imageData, overlayContext, effects$2);
   }
 
-  function main () {
-    const audioCtx = new AudioContext();
-    const { canvas, context } = prepareCanvas('#canvas');
-    const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
-    const databender = new databend(audioCtx);
-    loadTrack(audioCtx, databender);
+  function prepareUpload(context, databender) {
     const upload = document.querySelector('.upload');
     const fileUpload = document.querySelector('input[type=file]');
     upload.ondragover = function () { this.classList.add('hover'); return false; };
@@ -6142,6 +6135,15 @@ var webaudioDatabend = (function () {
       const files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
       handleFileUpload(files[0], context, databender);
     };
+  }
+
+  function main () {
+    const audioCtx = new AudioContext();
+    const { canvas, context } = prepareCanvas('#canvas');
+    const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
+    const databender = new databend(audioCtx);
+    loadTrack(audioCtx, databender);
+    prepareUpload();
     handleDatGUI(databender, audioCtx, canvas, context, overlayContext);
   }
   main();

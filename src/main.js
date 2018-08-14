@@ -93,7 +93,7 @@ function handleDatGUI(databender, audioCtx, canvas, context, overlayContext) {
         controller.onFinishChange(value => {
           toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove, boundHandleFill)
         });
-    }
+      }
     });
   });
 
@@ -188,7 +188,6 @@ function loadTrack (audioCtx, databender) {
     });
 };
 
-
 function getFileType(file) {
   const imageFileTypes = ['jpg', 'png', 'bmp', 'jpeg'];
   const videoFileTypes = ['mp4', 'webm'];
@@ -205,7 +204,6 @@ function getFileType(file) {
 
   return fileType;
 };
-
 
 function handleFileUpload(file, context, databender) {
   const type = getFileType(file);
@@ -249,12 +247,7 @@ function handleFill(overlayContext, databender) {
   databender.bend(databender.imageData, overlayContext, effects);
 }
 
-function main () {
-  const audioCtx = new AudioContext();
-  const { canvas, context } = prepareCanvas('#canvas');
-  const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
-  const databender = new Databender(audioCtx);
-  loadTrack(audioCtx, databender);
+function prepareUpload(context, databender) {
   const upload = document.querySelector('.upload');
   const fileUpload = document.querySelector('input[type=file]');
   upload.ondragover = function () { this.classList.add('hover'); return false; };
@@ -265,6 +258,15 @@ function main () {
     const files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
     handleFileUpload(files[0], context, databender);
   }
+}
+
+function main () {
+  const audioCtx = new AudioContext();
+  const { canvas, context } = prepareCanvas('#canvas');
+  const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
+  const databender = new Databender(audioCtx);
+  loadTrack(audioCtx, databender);
+  prepareUpload();
   handleDatGUI(databender, audioCtx, canvas, context, overlayContext);
 };
 
