@@ -3246,13 +3246,12 @@ var webaudioDatabend = (function () {
   window.random = random();
 
   // Create a Databender instance
-  var databend = function (audioCtx) {
+  var databend = function (audioCtx, config) {
     // Create an AudioContext or use existing one
     this.audioCtx = audioCtx ? audioCtx : new AudioContext();
-
     this.channels = 1; 
 
-    this.bend = function (image) {
+    this.convert = function (image) {
       if (image instanceof Image || image instanceof HTMLVideoElement) {
         var canvas = document.createElement('canvas');
         canvas.width = window.innerWidth;
@@ -3354,6 +3353,11 @@ var webaudioDatabend = (function () {
       context.putImageData(transformedImage, x, y);
     };
 
+    this.bend = function (data, context, effectsConfig, x, y) { 
+      return this.convert(data)
+        .then((buffer) => this.render(buffer, effectsConfig))
+        .then((buffer) => this.draw(buffer, context, x, y))
+    };
 
     return this;
   };
@@ -5962,7 +5966,7 @@ var webaudioDatabend = (function () {
     const toolsTab = gui.addFolder('Tools');
 
     Object.keys(tools$1).forEach(tool => {
-      const boundHandleFill = handleFill.bind(null, context, overlayContext, databender);
+      const boundHandleFill = handleFill.bind(null, overlayContext, databender);
       const toolTab  = toolsTab.addFolder(tool);
       Object.keys(tools$1[tool]).forEach(param => {
         const controller = toolTab.add(tools$1[tool], param);
@@ -5985,7 +5989,7 @@ var webaudioDatabend = (function () {
           const boundRender = databender.render.bind(databender);
           bufferSource.loop = true;
 
-          databender.boundRender(window.trackBuffer, options$1, effects$2).then(function (buffer) { 
+          databender.boundRender(window.trackBuffer, effects$2).then(function (buffer) { 
             if (window.prevBufferSource) {
               window.prevBufferSource.stop();
             }
@@ -6004,9 +6008,7 @@ var webaudioDatabend = (function () {
 
     function drawFrame() {
       if(v.paused || v.ended) return false;
-      const databent = databender.bend(v)
-        .then((buffer) => databender.render.call(databender, buffer, effects$2))
-        .then((buffer) => databender.draw.call(databender, buffer, context));
+      return databender.bend(v, context, effects$2);
     }
 
     (function repeat() {
@@ -6021,20 +6023,18 @@ var webaudioDatabend = (function () {
     reader.onload = function (e) {
       const img = new Image();
       img.onload = function () {
-        databender.bend(img)
-          .then((buffer) => databender.render.call(databender, buffer, effects$2))
-          .then((buffer) => databender.draw.call(databender, buffer, context));
+        return databender.bend(img, context, effects$2)
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(e);
   }
-  function handleVideoUpload(e, canvas, databender){
+  function handleVideoUpload(e, context, databender){
     const reader = new FileReader();
     const video = document.createElement('video');
 
     video.addEventListener('play', function () {
-      renderVideoToCanvas(this, canvas, databender);
+      renderVideoToCanvas(this, context, databender);
     }, false);
 
     reader.onload = function (event) {
@@ -6115,24 +6115,22 @@ var webaudioDatabend = (function () {
     const { size } = tools$1.Brush;
     const drawX = getDrawCoordinate(clientX, size);
     const drawY = getDrawCoordinate(clientY, size);
-    const imageSubset = context.getImageData(drawX, drawY, brushSize, brushSize);
+    const imageSubset = context.getImageData(drawX, drawY, size, size);
 
-    databender.bend(imageSubset)
-      .then((buffer) => databender.render.call(databender, buffer, effects$2))
-      .then((buffer) => databender.draw.call(databender, buffer, overlayContext, drawX, drawY));
+    databender.bend(imageSubset, overlayContext, effects$2, drawX, drawY);
   }
 
-  function handleFill(context, overlayContext, databender, e) {
-    databender.bend(databender.imageData)
-      .then((buffer) => databender.render.call(databender, buffer, effects$2))
-      .then((buffer) => databender.draw.call(databender, buffer, overlayContext));
+  function handleFill(overlayContext, databender) {
+    // @NOTE - Would like to think of a better way to pass imageData,
+    // as this only works because we have already set imageData implicitly.
+    databender.bend(databender.imageData, overlayContext, effects$2);
   }
 
   function main () {
     const audioCtx = new AudioContext();
     const { canvas, context } = prepareCanvas('#canvas');
     const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
-    const databender = new databend(audioCtx, overlayCanvas);
+    const databender = new databend(audioCtx);
     loadTrack(audioCtx, databender);
     const upload = document.querySelector('.upload');
     const fileUpload = document.querySelector('input[type=file]');

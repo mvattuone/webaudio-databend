@@ -3,13 +3,12 @@ var effects = require('./effects');
 window.random = require('random-js')();
 
 // Create a Databender instance
-module.exports = function (audioCtx) {
+module.exports = function (audioCtx, config) {
   // Create an AudioContext or use existing one
   this.audioCtx = audioCtx ? audioCtx : new AudioContext();
-
   this.channels = 1; 
 
-  this.bend = function (image) {
+  this.convert = function (image) {
     if (image instanceof Image || image instanceof HTMLVideoElement) {
       var canvas = document.createElement('canvas');
       canvas.width = window.innerWidth;
@@ -111,6 +110,11 @@ module.exports = function (audioCtx) {
     context.putImageData(transformedImage, x, y);
   };
 
+  this.bend = function (data, context, effectsConfig, x, y) { 
+    return this.convert(data)
+      .then((buffer) => this.render(buffer, effectsConfig))
+      .then((buffer) => this.draw(buffer, context, x, y))
+  };
 
   return this;
 };
