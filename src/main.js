@@ -266,7 +266,7 @@ function main () {
   const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
   const databender = new Databender(audioCtx);
   loadTrack(audioCtx, databender);
-  prepareUpload();
+  prepareUpload(context, databender);
   handleDatGUI(databender, audioCtx, canvas, context, overlayContext);
 };
 
