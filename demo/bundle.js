@@ -5964,12 +5964,10 @@ var webaudioDatabend = (function () {
 
   function handleDatGUI(databender, audioCtx, canvas, context, overlayContext) {
     const gui = new dat.GUI();
-    const boundHandleMousemove = handleMousemove.bind(null, context, overlayContext, databender);
-    const boundHandleFill = handleFill.bind(null, context, overlayContext, databender);
     const handlers = {
-      handleClick: boundHandleFill, 
+      handleClick: handleFill.bind(null, context, overlayContext, databender),
       handleMousedown,
-      handleMousemove: boundHandleMousemove,
+      handleMousemove: handleMousemove.bind(null, context, overlayContext, databender),
       handleMouseup,
     };
 
