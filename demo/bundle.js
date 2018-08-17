@@ -5908,7 +5908,6 @@ var webaudioDatabend = (function () {
   let isDragging = false;
   let startingPosition;
 
-
   const handleMousedown = function (e) {
     isDragging = true;
     startingPosition = [e.clientX, e.clientY];
@@ -5934,24 +5933,29 @@ var webaudioDatabend = (function () {
     startingPosition = [];
   };
 
-  function toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove, boundHandleFill) { 
+  function toggleTool(tool, value, canvas, context, databender, overlayContext, handlers) { 
     if (value) { 
-      setToolEventHandlers(tool, 'add', canvas, boundHandleFill, boundHandleMousemove);
+      dispatchToolEventHandlers(tool, 'add', canvas, handlers);
     } else {
-      setToolEventHandlers(tool, 'remove', canvas, boundHandleFill, boundHandleMousemove);
+      dispatchToolEventHandlers(tool, 'remove', canvas, handlers);
     }
   }
 
-  function setToolEventHandlers(tool, operation, canvas, boundHandleFill, boundHandleMousemove) {
+  function setToolEventHandlers (events, canvas, operationFn, handlers) {
+    return events.forEach((eventType) => 
+      canvas[operationFn](eventType, handlers[`handle${eventType.charAt(0).toUpperCase()}${eventType.slice(1)}`]));
+  }
+
+  function dispatchToolEventHandlers(tool, operation, canvas, handlers) {
     const operationFn = `${operation}EventListener`;
     switch(tool) {
       case 'Brush':
-        canvas[operationFn]('mousedown', handleMousedown);
-        canvas[operationFn]('mousemove', boundHandleMousemove);
-        canvas[operationFn]('mouseup', handleMouseup);
+        const brushEvents = ['mousedown', 'mousemove', 'mouseup'];
+        setToolEventHandlers(brushEvents, canvas, operationFn, handlers);
         break;
       case 'Fill': 
-        canvas[operationFn]('click', boundHandleFill);
+        const fillEvents = ['click'];
+        setToolEventHandlers(fillEvents, canvas, operationFn, handlers);
         break;
       default:
         throw new Error('That tool is somehow not defined');
@@ -5961,6 +5965,13 @@ var webaudioDatabend = (function () {
   function handleDatGUI(databender, audioCtx, canvas, context, overlayContext) {
     const gui = new dat.GUI();
     const boundHandleMousemove = handleMousemove.bind(null, context, overlayContext, databender);
+    const boundHandleFill = handleFill.bind(null, context, overlayContext, databender);
+    const handlers = {
+      handleClick: boundHandleFill, 
+      handleMousedown,
+      handleMousemove: boundHandleMousemove,
+      handleMouseup,
+    };
 
     const optionsTab = gui.addFolder('Options');
     Object.keys(options$1).forEach(option => {
@@ -5972,7 +5983,6 @@ var webaudioDatabend = (function () {
     });
 
     const toolsTab = gui.addFolder('Tools');
-    const boundHandleFill = handleFill.bind(null, context, overlayContext, databender);
 
     Object.keys(tools$1).forEach(tool => {
       const toolTab  = toolsTab.addFolder(tool);
@@ -5983,10 +5993,9 @@ var webaudioDatabend = (function () {
           controller.onFinishChange(value => {
              Object.keys(tools$1).filter((t) => t !== tool).forEach((t) => {
                tools$1[t].active = false;
-               console.log(t);
-               setToolEventHandlers(t, 'remove', canvas, boundHandleFill, boundHandleMousemove);
+               dispatchToolEventHandlers(t, 'remove', canvas, handlers);
             });
-            toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove, boundHandleFill);
+            toggleTool(tool, value, canvas, context, databender, overlayContext, handlers);
           });
         }
       });
