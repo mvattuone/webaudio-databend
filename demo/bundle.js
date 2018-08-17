@@ -5936,21 +5936,25 @@ var webaudioDatabend = (function () {
 
   function toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove, boundHandleFill) { 
     if (value) { 
-      if (tool === 'Brush') { 
-        canvas.addEventListener('mousedown', handleMousedown);
-        canvas.addEventListener('mousemove', boundHandleMousemove);
-        canvas.addEventListener('mouseup', handleMouseup);
-      } else {
-        canvas.addEventListener('click', boundHandleFill);
-      }
+      setToolEventHandlers(tool, 'add', canvas, boundHandleFill, boundHandleMousemove);
     } else {
-      if (tool === 'Brush') { 
-        canvas.removeEventListener('mousedown', handleMousedown);
-        canvas.removeEventListener('mousemove', boundHandleMousemove);
-        canvas.removeEventListener('mouseup', handleMouseup);
-      } else {
-        canvas.removeEventListener('click', boundHandleFill);
-      }
+      setToolEventHandlers(tool, 'remove', canvas, boundHandleFill, boundHandleMousemove);
+    }
+  }
+
+  function setToolEventHandlers(tool, operation, canvas, boundHandleFill, boundHandleMousemove) {
+    const operationFn = `${operation}EventListener`;
+    switch(tool) {
+      case 'Brush':
+        canvas[operationFn]('mousedown', handleMousedown);
+        canvas[operationFn]('mousemove', boundHandleMousemove);
+        canvas[operationFn]('mouseup', handleMouseup);
+        break;
+      case 'Fill': 
+        canvas[operationFn]('click', boundHandleFill);
+        break;
+      default:
+        throw new Error('That tool is somehow not defined');
     }
   }
 
@@ -5968,15 +5972,20 @@ var webaudioDatabend = (function () {
     });
 
     const toolsTab = gui.addFolder('Tools');
+    const boundHandleFill = handleFill.bind(null, context, overlayContext, databender);
 
     Object.keys(tools$1).forEach(tool => {
-      const boundHandleFill = handleFill.bind(null, overlayContext, databender);
       const toolTab  = toolsTab.addFolder(tool);
       Object.keys(tools$1[tool]).forEach(param => {
-        const controller = toolTab.add(tools$1[tool], param);
+        const controller = toolTab.add(tools$1[tool], param).listen();
 
         if (param === 'active') {
           controller.onFinishChange(value => {
+             Object.keys(tools$1).filter((t) => t !== tool).forEach((t) => {
+               tools$1[t].active = false;
+               console.log(t);
+               setToolEventHandlers(t, 'remove', canvas, boundHandleFill, boundHandleMousemove);
+            });
             toggleTool(tool, value, canvas, context, databender, overlayContext, boundHandleMousemove, boundHandleFill);
           });
         }
@@ -6122,10 +6131,12 @@ var webaudioDatabend = (function () {
     databender.bend(imageSubset, overlayContext, effects$2, drawX, drawY);
   }
 
-  function handleFill(overlayContext, databender) {
+  function handleFill(context, overlayContext, databender) {
+    const { canvas } = context;
     // @NOTE - Would like to think of a better way to pass imageData,
     // as this only works because we have already set imageData implicitly.
-    databender.bend(databender.imageData, overlayContext, effects$2);
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    databender.bend(imageData, overlayContext, effects$2);
   }
 
   function prepareUpload(context, databender) {
