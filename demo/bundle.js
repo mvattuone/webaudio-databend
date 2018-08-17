@@ -6140,8 +6140,6 @@ var webaudioDatabend = (function () {
 
   function handleFill(context, overlayContext, databender) {
     const { canvas } = context;
-    // @NOTE - Would like to think of a better way to pass imageData,
-    // as this only works because we have already set imageData implicitly.
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     databender.bend(imageData, overlayContext, effects$2);
   }
