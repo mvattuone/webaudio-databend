@@ -1,12 +1,13 @@
-var Tuna = require('tunajs'); 
 var effects = require('./effects');
-window.random = require('random-js')();
+var Tuna = require('tunajs');
 
 // Create a Databender instance
-module.exports = function (audioCtx, config) {
-  // Create an AudioContext or use existing one
+module.exports = function (config, audioCtx) {
   this.audioCtx = audioCtx ? audioCtx : new AudioContext();
   this.channels = 1; 
+  this.config = config;
+  this.configKeys = Object.keys(this.config);
+  this.previousConfig = this.config;
 
   this.convert = function (image) {
     if (image instanceof Image || image instanceof HTMLVideoElement) {
@@ -31,13 +32,16 @@ module.exports = function (audioCtx, config) {
     return Promise.resolve(audioBuffer);
   }
 
-  this.render = function (buffer, effectsConfig, bypass = false) {
-    this.previousEffectsConfig = this.previousEffectsConfig || JSON.parse(JSON.stringify(effectsConfig));
+  this.configHasChanged = function () { 
+    return JSON.stringify(this.previousConfig) !== JSON.stringify(this.config);
+  }
 
-    const effectsIndex = Object.keys(effectsConfig);
+  this.render = function (buffer, bypass = false) {
 
     // Create offlineAudioCtx that will house our rendered buffer
     var offlineAudioCtx = new OfflineAudioContext(this.channels, buffer.length * this.channels, this.audioCtx.sampleRate);
+
+    var tuna = new Tuna(offlineAudioCtx);
 
     // Create an AudioBufferSourceNode, which represents an audio source consisting of in-memory audio data
     var bufferSource = offlineAudioCtx.createBufferSource();
@@ -45,54 +49,43 @@ module.exports = function (audioCtx, config) {
     // Set buffer to audio buffer containing image data
     bufferSource.buffer = buffer; 
 
-    if (this.previousEffectsConfig !== effectsConfig) {
-      var activeEffects = effectsIndex.reduce((acc, cur) => {
-        effectsConfig[cur].active ? acc[cur] = effects[cur] : false; 
-        return acc;
-      }, {});
-      var activeEffectsIndex = Object.keys(activeEffects);
-    }
-
-    if (this.previousEffectsConfig !== effectsConfig && activeEffectsIndex && activeEffectsIndex.length) {
-      activeEffectsIndex.forEach((effect) => {
-        if (effect === 'detune' || effect === 'playbackRate') {
-          return effects[effect](bufferSource, effectsConfig)
-        }
-      });
-    }
+    var activeEffects = this.configKeys.reduce((acc, cur) => {
+      this.config[cur].active ? acc[cur] = effects[cur] : false; 
+      return acc;
+    }, {});
+    var activeEffectsIndex = Object.keys(activeEffects);
 
     bufferSource.start();
 
     if (activeEffectsIndex && activeEffectsIndex.length) {
-      var tuna = new Tuna(offlineAudioCtx);
-
-      var nodes = activeEffectsIndex.map((effect) => { 
-        if (effect !== 'detune' && effect !== 'playbackRate') {
-          if (effect === 'biquad') {
-            return effects[effect](bufferSource, offlineAudioCtx, effectsConfig);
-          } else {
-            return effects[effect](tuna, effectsConfig);
-          }
+      activeEffectsIndex.forEach((effect) => {
+        if (effect === 'detune' || effect === 'playbackRate') {
+          effects[effect](this.config, tuna, bufferSource);
+          activeEffectsIndex.pop();
         }
-      }).filter(Boolean);
+      });
     }
 
-    if (!nodes || nodes.length === 0 || bypass) {
+    if (!activeEffectsIndex.length) {
       bufferSource.connect(offlineAudioCtx.destination);
     } else {
+      var nodes = activeEffectsIndex.map((effect) => { 
+        const context = effect === 'biquad' ? offlineAudioCtx : tuna
+        return effects[effect](this.config, context, bufferSource);
+      }).filter(Boolean);
+
       nodes.forEach((node) => { 
         bufferSource.connect(node);
         node.connect(offlineAudioCtx.destination);
       });
     }
 
-    this.previousEffectsConfig = JSON.parse(JSON.stringify(effectsConfig));
+    this.previousConfig = this.config; 
     // Kick off the render, callback will contain rendered buffer in event
     return offlineAudioCtx.startRendering();
   };
 
   this.draw = function (buffer, context, x = 0, y = 0) {
-
     // Get buffer data
     var bufferData = buffer.getChannelData(0);
 
@@ -106,13 +99,12 @@ module.exports = function (audioCtx, config) {
     // putImageData requires an ImageData Object
     // @see https://developer.mozilla.org/en-US/docs/Web/API/ImageData
     var transformedImage = new ImageData(clampedDataArray, this.imageData.width, this.imageData.height);
-
     context.putImageData(transformedImage, x, y);
   };
 
-  this.bend = function (data, context, effectsConfig, x, y) { 
+  this.bend = function (data, context, x = 0, y = 0) { 
     return this.convert(data)
-      .then((buffer) => this.render(buffer, effectsConfig))
+      .then((buffer) => this.render(buffer))
       .then((buffer) => this.draw(buffer, context, x, y))
   };
 

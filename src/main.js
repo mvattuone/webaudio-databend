@@ -6,7 +6,7 @@ function toggleAudio(value, audioCtx) {
   if (!value) {
     const bufferSource = audioCtx.createBufferSource();
     bufferSource.loop = true;
-    databender.render(window.trackBuffer, effects).then(function (buffer) { 
+    databender.render(window.trackBuffer).then(function (buffer) { 
       window.prevBufferSource.stop();
       bufferSource.buffer = buffer;
       bufferSource.connect(audioCtx.destination);
@@ -122,7 +122,7 @@ function handleDatGUI(databender, audioCtx, canvas, context, overlayContext) {
         const boundRender = databender.render.bind(databender);
         bufferSource.loop = true;
 
-        databender.boundRender(window.trackBuffer, effects).then(function (buffer) { 
+        databender.boundRender(window.trackBuffer).then(function (buffer) { 
           if (window.prevBufferSource) {
             window.prevBufferSource.stop();
           }
@@ -142,7 +142,7 @@ function renderVideoToCanvas(v, context, databender) {
 
   function drawFrame() {
     if(v.paused || v.ended) return false;
-    return databender.bend(v, context, effects);
+    return databender.bend(v, context);
   }
 
   (function repeat() {
@@ -157,7 +157,7 @@ function handleImageUpload (e, context, databender) {
   reader.onload = function (e) {
     const img = new Image();
     img.onload = function () {
-      return databender.bend(img, context, effects)
+      return databender.bend(img, context)
     };
     img.src = e.target.result;
   }
@@ -188,7 +188,7 @@ function loadTrack (audioCtx, databender) {
     .then((buffer) => window.trackBuffer = buffer)
     .then((buffer) => {
       audioCtx.decodeAudioData(buffer).then((decodedData) => {
-        databender.render(decodedData, effects).then(buffer => { 
+        databender.render(decodedData).then(buffer => { 
           const bufferSource = audioCtx.createBufferSource();
           bufferSource.buffer = buffer;
           bufferSource.connect(audioCtx.destination);
@@ -253,13 +253,13 @@ function handleDraw(e, context, overlayContext, databender) {
   const drawY = getDrawCoordinate(clientY, size);
   const imageSubset = context.getImageData(drawX, drawY, size, size);
 
-  databender.bend(imageSubset, overlayContext, effects, drawX, drawY)
+  databender.bend(imageSubset, overlayContext, drawX, drawY)
 }
 
 function handleFill(context, overlayContext, databender) {
   const { canvas } = context;
   const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-  databender.bend(imageData, overlayContext, effects);
+  databender.bend(imageData, overlayContext);
 }
 
 function prepareUpload(context, databender) {
@@ -279,7 +279,7 @@ function main () {
   const audioCtx = new AudioContext();
   const { canvas, context } = prepareCanvas('#canvas');
   const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
-  const databender = new Databender(audioCtx);
+  const databender = new Databender(effects, audioCtx);
   loadTrack(audioCtx, databender);
   prepareUpload(context, databender);
   handleDatGUI(databender, audioCtx, canvas, context, overlayContext);

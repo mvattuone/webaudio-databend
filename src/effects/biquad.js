@@ -1,4 +1,4 @@
-module.exports  = (bufferSource, offlineAudioCtx, config) => {
+module.exports  = (config, offlineAudioCtx, bufferSource) => {
   if (config.biquad.randomize) {
     var waveArray = new Float32Array(config.biquad.randomValues);
     for (let i=0;i<config.biquad.randomValues;i++) {
