@@ -85,7 +85,7 @@ module.exports = function (config, audioCtx) {
     return offlineAudioCtx.startRendering();
   };
 
-  this.draw = function (buffer, context, x = 0, y = 0) {
+  this.draw = function (buffer, context, x = 0, y = 0, sourceWidth = this.imageData.width, sourceHeight = this.imageData.height) {
     // Get buffer data
     var bufferData = buffer.getChannelData(0);
 
@@ -98,8 +98,14 @@ module.exports = function (config, audioCtx) {
 
     // putImageData requires an ImageData Object
     // @see https://developer.mozilla.org/en-US/docs/Web/API/ImageData
-    var transformedImage = new ImageData(clampedDataArray, this.imageData.width, this.imageData.height);
-    context.putImageData(transformedImage, x, y);
+    const transformedImageData = new ImageData(this.imageData.width, this.imageData.height);
+    transformedImageData.data.set(clampedDataArray);
+
+    const tmpCanvas = document.createElement('canvas');
+    tmpCanvas.width = this.imageData.width;
+    tmpCanvas.height = this.imageData.height;
+    tmpCanvas.getContext('2d').putImageData(transformedImageData, x, y);
+    context('2d').drawImage(tmpCanvas, x, y, sourceWidth, sourceHeight, x, y, 1280, 768);
   };
 
   this.bend = function (data, context, x = 0, y = 0) { 
