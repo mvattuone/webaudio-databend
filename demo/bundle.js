@@ -58,6 +58,7 @@ var webaudioDatabend = (function () {
     detune: {
       active: false,
       areaOfEffect: 1,
+      enableEnvelopes: false,
       enablePartial: false,
       randomize: false,
       randomValues: 2,
@@ -158,6 +159,12 @@ var webaudioDatabend = (function () {
   };
 
   var detune = (config, tuna, bufferSource) => {
+    if (config.detune.enableEnvelopes) { 
+        bufferSource.detune.setValueAtTime(0.0, 0);
+        bufferSource.detune.linearRampToValueAtTime(Math.random(),0 + config.attack);
+        bufferSource.detune.linearRampToValueAtTime(0, 0 + (config.attack + config.release));
+    }
+
     if (config.detune.randomize) {
       var waveArray = new Float32Array(config.detune.randomValues);
       for (i=0;i<config.detune.randomValues;i++) {
@@ -2558,6 +2565,10 @@ var webaudioDatabend = (function () {
       return JSON.stringify(this.previousConfig) !== JSON.stringify(this.config);
     };
 
+    this.updateConfig = function (effect, param, value) {
+      this.config[effect][param] = value;
+    };
+
     this.render = function (buffer, bypass = false) {
 
       // Create offlineAudioCtx that will house our rendered buffer
@@ -2607,7 +2618,7 @@ var webaudioDatabend = (function () {
       return offlineAudioCtx.startRendering();
     };
 
-    this.draw = function (buffer, context, x = 0, y = 0) {
+    this.draw = function (buffer, context, sourceX = 0, sourceY = 0, x = 0, y = 0, sourceWidth = this.imageData.width, sourceHeight = this.imageData.height, targetWidth = window.innerWidth, targetHeight = window.innerHeight) {
       // Get buffer data
       var bufferData = buffer.getChannelData(0);
 
@@ -2620,14 +2631,20 @@ var webaudioDatabend = (function () {
 
       // putImageData requires an ImageData Object
       // @see https://developer.mozilla.org/en-US/docs/Web/API/ImageData
-      var transformedImage = new ImageData(clampedDataArray, this.imageData.width, this.imageData.height);
-      context.putImageData(transformedImage, x, y);
+      const transformedImageData = new ImageData(this.imageData.width, this.imageData.height);
+      transformedImageData.data.set(clampedDataArray);
+
+      const tmpCanvas = document.createElement('canvas');
+      tmpCanvas.width = this.imageData.width;
+      tmpCanvas.height = this.imageData.height;
+      tmpCanvas.getContext('2d').putImageData(transformedImageData, sourceX, sourceY);
+      context.drawImage(tmpCanvas, sourceX, sourceY, sourceWidth, sourceHeight, x, y, targetWidth, targetHeight);
     };
 
-    this.bend = function (data, context, x = 0, y = 0) { 
+    this.bend = function (data, context, sourceX = 0, sourceY = 0, x = 0, y = 0, targetWidth = window.innerWidth, targetHeight = window.innerHeight) { 
       return this.convert(data)
         .then((buffer) => this.render(buffer))
-        .then((buffer) => this.draw(buffer, context, x, y))
+        .then((buffer) => this.draw(buffer, context, sourceX, sourceY, x, y, this.imageData.width, this.imageData.height, targetWidth, targetHeight))
     };
 
     return this;
@@ -5402,7 +5419,7 @@ var webaudioDatabend = (function () {
     const drawY = getDrawCoordinate(clientY, size);
     const imageSubset = context.getImageData(drawX, drawY, size, size);
 
-    databender.bend(imageSubset, overlayContext, drawX, drawY);
+    databender.bend(imageSubset, overlayContext, 0, 0, drawX, drawY, size, size, size, size);
   }
 
   function handleFill(context, overlayContext, databender) {

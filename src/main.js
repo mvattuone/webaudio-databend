@@ -253,7 +253,7 @@ function handleDraw(e, context, overlayContext, databender) {
   const drawY = getDrawCoordinate(clientY, size);
   const imageSubset = context.getImageData(drawX, drawY, size, size);
 
-  databender.bend(imageSubset, overlayContext, drawX, drawY)
+  databender.bend(imageSubset, overlayContext, 0, 0, drawX, drawY, size, size, size, size);
 }
 
 function handleFill(context, overlayContext, databender) {

@@ -1,6 +1,12 @@
 'use strict';
 
 module.exports = (config, tuna, bufferSource) => {
+  if (config.detune.enableEnvelopes) { 
+      bufferSource.detune.setValueAtTime(0.0, 0);
+      bufferSource.detune.linearRampToValueAtTime(Math.random(),0 + config.attack);
+      bufferSource.detune.linearRampToValueAtTime(0, 0 + (config.attack + config.release));
+  }
+
   if (config.detune.randomize) {
     var waveArray = new Float32Array(config.detune.randomValues);
     for (i=0;i<config.detune.randomValues;i++) {

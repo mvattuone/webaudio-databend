@@ -55,6 +55,7 @@ const effects = {
   detune: {
     active: false,
     areaOfEffect: 1,
+    enableEnvelopes: false,
     enablePartial: false,
     randomize: false,
     randomValues: 2,
