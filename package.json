@@ -20,8 +20,8 @@
   "homepage": "https://github.com/mvattuone/webaudio-databend#readme",
   "dependencies": {
     "dat.gui": "^0.7.1",
-    "random-js": "^1.0.8",
-    "tunajs": "^1.0.0"
+    "databender": "^1.0.2",
+    "random-js": "^1.0.8"
   },
   "devDependencies": {
     "rollup": "^0.58.2",

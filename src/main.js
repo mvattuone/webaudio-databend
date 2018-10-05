@@ -1,5 +1,5 @@
 const { options, tools, effects } = require('./config');
-const Databender = require('./databend.js');
+const Databender = require('databender');
 const dat = require('dat.gui');
 
 function toggleAudio(value, audioCtx) { 
