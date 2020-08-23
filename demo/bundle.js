@@ -104,11 +104,15 @@ var webaudioDatabend = (function () {
     effects
   };
 
+  var random = function (x, y) {
+   return x+(y-x+1)*crypto.getRandomValues(new Uint32Array(1))[0]/2**32|0
+  };
+
   var biquad  = (config, offlineAudioCtx, bufferSource) => {
     if (config.biquad.randomize) {
       var waveArray = new Float32Array(config.biquad.randomValues);
       for (let i=0;i<config.biquad.randomValues;i++) {
-        waveArray[i] = window.random.real(0.0001, config.biquad.biquadFrequency); 
+        waveArray[i] = random(0.0001, config.biquad.biquadFrequency); 
       }
     }
     var biquadFilter = offlineAudioCtx.createBiquadFilter();
@@ -130,7 +134,6 @@ var webaudioDatabend = (function () {
   };
 
   var bitcrusher = (config, tuna) => {
-    console.log(tuna);
     return new tuna.Bitcrusher({
       bits: config.bitcrusher.bits,
       normfreq: config.bitcrusher.normfreq,
@@ -162,7 +165,7 @@ var webaudioDatabend = (function () {
     if (config.detune.randomize) {
       var waveArray = new Float32Array(config.detune.randomValues);
       for (i=0;i<config.detune.randomValues;i++) {
-        waveArray[i] = window.random.real(0.0001, 400); 
+        waveArray[i] = random(0.0001, 400); 
       }
     }
     if (config.detune.randomize) {
@@ -213,16 +216,6 @@ var webaudioDatabend = (function () {
     }  return bufferSource;
   };
 
-  var wahwah = (config, tuna) => {
-    /* return new tuna.WahWah({ */
-    /*   automode: config.wahwah.automode, */
-    /*   baseFrequency: config.wahwah.baseFrequency, */
-    /*   excursionOctaves: config.wahwah.excursionOctaves, */
-    /*   sweep: config.wahwah.sweep, */
-    /*   sensitivity: config.wahwah.sensitivity */
-    /* }); */
-  };
-
   var biquad$1 = biquad;
   var bitcrusher$1 = bitcrusher;
   var chorus$1 = chorus;
@@ -232,7 +225,6 @@ var webaudioDatabend = (function () {
   var phaser$1 = phaser;
   var pingPong$1 = pingPong;
   var playbackRate$1 = playbackRate;
-  var wahwah$1 = wahwah;
 
   var effects$1 = {
   	biquad: biquad$1,
@@ -243,8 +235,7 @@ var webaudioDatabend = (function () {
   	gain: gain$1,
   	phaser: phaser$1,
   	pingPong: pingPong$1,
-  	playbackRate: playbackRate$1,
-  	wahwah: wahwah$1
+  	playbackRate: playbackRate$1
   };
 
   function createCommonjsModule(fn, module) {
@@ -577,8 +568,8 @@ var webaudioDatabend = (function () {
           this.activateNode.connect(this.convolver.input);
           this.convolver.output.connect(this.makeupNode);
           this.makeupNode.connect(this.output);
-
-          this.makeupGain = initValue(properties.makeupGain, this.defaults.makeupGain.value);
+          //don't use makeupGain setter at init to avoid smoothing
+          this.makeupNode.gain.value = initValue(properties.makeupGain, this.defaults.makeupGain.value);
           this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Cabinet.prototype = Object.create(Super, {
@@ -608,7 +599,7 @@ var webaudioDatabend = (function () {
                   return this.makeupNode.gain;
               },
               set: function(value) {
-                  this.makeupNode.gain.value = value;
+                  this.makeupNode.gain.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           },
           newConvolver: {
@@ -740,8 +731,8 @@ var webaudioDatabend = (function () {
               },
               set: function(value) {
                   this._feedback = value;
-                  this.feedbackGainNodeLR.gain.value = this._feedback;
-                  this.feedbackGainNodeRL.gain.value = this._feedback;
+                  this.feedbackGainNodeLR.gain.setTargetAtTime(this._feedback, userContext.currentTime, 0.01);
+                  this.feedbackGainNodeRL.gain.setTargetAtTime(this._feedback, userContext.currentTime, 0.01);
               }
           },
           rate: {
@@ -770,7 +761,13 @@ var webaudioDatabend = (function () {
           this.makeupNode.connect(this.output);
 
           this.automakeup = initValue(properties.automakeup, this.defaults.automakeup.value);
-          this.makeupGain = initValue(properties.makeupGain, this.defaults.makeupGain.value);
+
+          //don't use makeupGain setter at initialization to avoid smoothing
+          if (this.automakeup) {
+              this.makeupNode.gain.value = dbToWAVolume(this.computeMakeup());
+          } else {
+              this.makeupNode.gain.value = dbToWAVolume(initValue(properties.makeupGain, this.defaults.makeupGain.value));
+          }
           this.threshold = initValue(properties.threshold, this.defaults.threshold.value);
           this.release = initValue(properties.release, this.defaults.release.value);
           this.attack = initValue(properties.attack, this.defaults.attack.value);
@@ -910,7 +907,7 @@ var webaudioDatabend = (function () {
                   return this.makeupNode.gain;
               },
               set: function(value) {
-                  this.makeupNode.gain.value = dbToWAVolume(value);
+                  this.makeupNode.gain.setTargetAtTime(dbToWAVolume(value), userContext.currentTime, 0.01);
               }
           }
       });
@@ -936,14 +933,15 @@ var webaudioDatabend = (function () {
           this.wet.connect(this.output);
           this.dry.connect(this.output);
 
-          this.dryLevel = initValue(properties.dryLevel, this.defaults.dryLevel.value);
-          this.wetLevel = initValue(properties.wetLevel, this.defaults.wetLevel.value);
-          this.highCut = properties.highCut || this.defaults.highCut.value;
-          this.buffer = properties.impulse || "../impulses/ir_rev_short.wav";
-          this.lowCut = properties.lowCut || this.defaults.lowCut.value;
-          this.level = initValue(properties.level, this.defaults.level.value);
+          //don't use setters at init to avoid smoothing
+          this.dry.gain.value = initValue(properties.dryLevel, this.defaults.dryLevel.value);
+          this.wet.gain.value = initValue(properties.wetLevel, this.defaults.wetLevel.value);
+          this.filterHigh.frequency.value = properties.highCut || this.defaults.highCut.value;
+          this.filterLow.frequency.value = properties.lowCut || this.defaults.lowCut.value;
+          this.output.gain.value = initValue(properties.level, this.defaults.level.value);
           this.filterHigh.type = "lowpass";
           this.filterLow.type = "highpass";
+          this.buffer = properties.impulse || "../impulses/ir_rev_short.wav";
           this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Convolver.prototype = Object.create(Super, {
@@ -1000,7 +998,7 @@ var webaudioDatabend = (function () {
                   return this.filterLow.frequency;
               },
               set: function(value) {
-                  this.filterLow.frequency.value = value;
+                  this.filterLow.frequency.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           },
           highCut: {
@@ -1008,7 +1006,7 @@ var webaudioDatabend = (function () {
                   return this.filterHigh.frequency;
               },
               set: function(value) {
-                  this.filterHigh.frequency.value = value;
+                  this.filterHigh.frequency.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           },
           level: {
@@ -1016,7 +1014,7 @@ var webaudioDatabend = (function () {
                   return this.output.gain;
               },
               set: function(value) {
-                  this.output.gain.value = value;
+                  this.output.gain.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           },
           dryLevel: {
@@ -1024,7 +1022,7 @@ var webaudioDatabend = (function () {
                   return this.dry.gain;
               },
               set: function(value) {
-                  this.dry.gain.value = value;
+                  this.dry.gain.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           },
           wetLevel: {
@@ -1032,7 +1030,7 @@ var webaudioDatabend = (function () {
                   return this.wet.gain;
               },
               set: function(value) {
-                  this.wet.gain.value = value;
+                  this.wet.gain.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           },
           buffer: {
@@ -1088,10 +1086,11 @@ var webaudioDatabend = (function () {
           this.dry.connect(this.output);
 
           this.delayTime = properties.delayTime || this.defaults.delayTime.value;
-          this.feedback = initValue(properties.feedback, this.defaults.feedback.value);
-          this.wetLevel = initValue(properties.wetLevel, this.defaults.wetLevel.value);
-          this.dryLevel = initValue(properties.dryLevel, this.defaults.dryLevel.value);
-          this.cutoff = properties.cutoff || this.defaults.cutoff.value;
+          //don't use setters at init to avoid smoothing
+          this.feedbackNode.gain.value = initValue(properties.feedback, this.defaults.feedback.value);
+          this.wet.gain.value = initValue(properties.wetLevel, this.defaults.wetLevel.value);
+          this.dry.gain.value = initValue(properties.dryLevel, this.defaults.dryLevel.value);
+          this.filter.frequency.value = properties.cutoff || this.defaults.cutoff.value;
           this.filter.type = "lowpass";
           this.bypass = properties.bypass || this.defaults.bypass.value;
       };
@@ -1159,7 +1158,7 @@ var webaudioDatabend = (function () {
                   return this.wet.gain;
               },
               set: function(value) {
-                  this.wet.gain.value = value;
+                  this.wet.gain.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           },
           dryLevel: {
@@ -1168,7 +1167,7 @@ var webaudioDatabend = (function () {
                   return this.dry.gain;
               },
               set: function(value) {
-                  this.dry.gain.value = value;
+                  this.dry.gain.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           },
           feedback: {
@@ -1177,7 +1176,7 @@ var webaudioDatabend = (function () {
                   return this.feedbackNode.gain;
               },
               set: function(value) {
-                  this.feedbackNode.gain.value = value;
+                  this.feedbackNode.gain.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           },
           cutoff: {
@@ -1186,7 +1185,7 @@ var webaudioDatabend = (function () {
                   return this.filter.frequency;
               },
               set: function(value) {
-                  this.filter.frequency.value = value;
+                  this.filter.frequency.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           }
       });
@@ -1203,10 +1202,11 @@ var webaudioDatabend = (function () {
           this.activateNode.connect(this.filter);
           this.filter.connect(this.output);
 
-          this.frequency = properties.frequency || this.defaults.frequency.value;
+          //don't use setters for freq and gain at init to avoid smoothing
+          this.filter.frequency.value = properties.frequency || this.defaults.frequency.value;
           this.Q = properties.resonance || this.defaults.Q.value;
           this.filterType = initValue(properties.filterType, this.defaults.filterType.value);
-          this.gain = initValue(properties.gain, this.defaults.gain.value);
+          this.filter.gain.value = initValue(properties.gain, this.defaults.gain.value);
           this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Filter.prototype = Object.create(Super, {
@@ -1273,7 +1273,7 @@ var webaudioDatabend = (function () {
                   return this.filter.gain;
               },
               set: function(value) {
-                  this.filter.gain.value = value;
+                  this.filter.gain.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           },
           frequency: {
@@ -1282,7 +1282,7 @@ var webaudioDatabend = (function () {
                   return this.filter.frequency;
               },
               set: function(value) {
-                  this.filter.frequency.value = value;
+                  this.filter.frequency.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           }
       });
@@ -1300,7 +1300,8 @@ var webaudioDatabend = (function () {
           this.activateNode.connect(this.gainNode);
           this.gainNode.connect(this.output);
 
-          this.gain = initValue(properties.gain, this.defaults.gain.value);
+          //don't use setter at init to avoid smoothing
+          this.gainNode.gain.value = initValue(properties.gain, this.defaults.gain.value);
           this.bypass = properties.bypass || this.defaults.bypass.value;
       };
       Tuna.prototype.Gain.prototype = Object.create(Super, {
@@ -1328,7 +1329,7 @@ var webaudioDatabend = (function () {
                   return this.gainNode.gain;
               },
               set: function(value) {
-                  this.gainNode.gain.value = value;
+                  this.gainNode.gain.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           }
       });
@@ -1351,10 +1352,10 @@ var webaudioDatabend = (function () {
           in1 = in2 = in3 = in4 = out1 = out2 = out3 = out4 = 0.0;
           var input, output, f, fb, i, length, inputFactor;
           this.processor.onaudioprocess = function(e) {
-              input = e.inputBuffer.getChannelData(0),
-                  output = e.outputBuffer.getChannelData(0),
-                  f = this.cutoff * 1.16,
-                  inputFactor = 0.35013 * (f * f) * (f * f);
+              input = e.inputBuffer.getChannelData(0);
+              output = e.outputBuffer.getChannelData(0);
+              f = this.cutoff * 1.16;
+              inputFactor = 0.35013 * (f * f) * (f * f);
               fb = this.resonance * (1.0 - 0.15 * f * f);
               length = input.length;
               for (i = 0; i < length; i++) {
@@ -1470,9 +1471,9 @@ var webaudioDatabend = (function () {
                       scaled: true
                   },
                   outputGain: {
-                      value: 1,
-                      min: 0,
-                      max: 1,
+                      value: 0,
+                      min: -46,
+                      max: 0,
                       automatable: true,
                       type: FLOAT,
                       scaled: true
@@ -1528,6 +1529,7 @@ var webaudioDatabend = (function () {
               },
               set: function(value) {
                   this._outputGain = dbToWAVolume(value);
+                  this.outputDrive.gain.setValueAtTime(this._outputGain, userContext.currentTime, 0.01);
               }
           },
           algorithmIndex: {
@@ -1794,7 +1796,7 @@ var webaudioDatabend = (function () {
                   this._baseModulationFrequency = value;
                   this.lfoL.offset = this._baseModulationFrequency;
                   this.lfoR.offset = this._baseModulationFrequency;
-                  this._depth = this._depth;
+                  this.depth = this._depth;
               }
           },
           feedback: {
@@ -1803,8 +1805,8 @@ var webaudioDatabend = (function () {
               },
               set: function(value) {
                   this._feedback = value;
-                  this.feedbackGainNodeL.gain.value = this._feedback;
-                  this.feedbackGainNodeR.gain.value = this._feedback;
+                  this.feedbackGainNodeL.gain.setTargetAtTime(this._feedback, userContext.currentTime, 0.01);
+                  this.feedbackGainNodeR.gain.setTargetAtTime(this._feedback, userContext.currentTime, 0.01);
               }
           },
           stereoPhase: {
@@ -1886,7 +1888,7 @@ var webaudioDatabend = (function () {
                   return this.wet.gain;
               },
               set: function (value) {
-                  this.wet.gain.value = value;
+                  this.wet.gain.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           }, 
           feedback: {
@@ -1895,7 +1897,7 @@ var webaudioDatabend = (function () {
                   return this.feedbackLevel.gain;
               },
               set: function (value) {
-                  this.feedbackLevel.gain.value = value;
+                  this.feedbackLevel.gain.setTargetAtTime(value, userContext.currentTime, 0.01);
               }
           },
           defaults: {
@@ -1919,14 +1921,14 @@ var webaudioDatabend = (function () {
                       value: 0.3,
                       min: 0,
                       max: 1,
-                      automatable: false,
+                      automatable: true,
                       type: FLOAT
                   },
                   wetLevel: {
                       value: 0.5,
                       min: 0,
                       max: 1,
-                      automatable: false,
+                      automatable: true,
                       type: FLOAT
                   },
                   bypass: {
@@ -1943,12 +1945,11 @@ var webaudioDatabend = (function () {
               properties = this.getDefaults();
           }
           this.input = userContext.createGain();
-          this.splitter = this.activateNode = userContext.createChannelSplitter(
-                  2),
-              this.amplitudeL = userContext.createGain(),
-              this.amplitudeR = userContext.createGain(),
-              this.merger = userContext.createChannelMerger(2),
-              this.output = userContext.createGain();
+          this.splitter = this.activateNode = userContext.createChannelSplitter(2);
+          this.amplitudeL = userContext.createGain();
+          this.amplitudeR = userContext.createGain();
+          this.merger = userContext.createChannelMerger(2);
+          this.output = userContext.createGain();
           this.lfoL = new userInstance.LFO({
               target: this.amplitudeL.gain,
               callback: pipe
