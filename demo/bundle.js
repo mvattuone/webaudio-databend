@@ -3,7 +3,7 @@ var webaudioDatabend = (function () {
 
   const options = {
     playAudio: false,
-    frameRate: 30
+    frameRate: 10
   };
 
   const tools = {
@@ -48,8 +48,8 @@ var webaudioDatabend = (function () {
       randomize: false,
       quality: 1,
       randomValues: 2,
-      type: "highpass",
-      biquadFrequency: 4000
+      type: "lowpass",
+      biquadFrequency: 8500
     },
     gain: {
       active: false,
@@ -164,7 +164,7 @@ var webaudioDatabend = (function () {
   var detune = (config, tuna, bufferSource) => {
     if (config.detune.randomize) {
       var waveArray = new Float32Array(config.detune.randomValues);
-      for (i=0;i<config.detune.randomValues;i++) {
+      for (let i=0;i<config.detune.randomValues;i++) {
         waveArray[i] = random(0.0001, 400); 
       }
     }
@@ -2826,7 +2826,7 @@ var webaudioDatabend = (function () {
       return obj === false || obj === true;
     },
     isFunction: function isFunction(obj) {
-      return Object.prototype.toString.call(obj) === '[object Function]';
+      return obj instanceof Function;
     }
   };
 
@@ -3324,8 +3324,9 @@ var webaudioDatabend = (function () {
   });
   Object.defineProperty(Color.prototype, 'hex', {
     get: function get$$1() {
-      if (!this.__state.space !== 'HEX') {
+      if (this.__state.space !== 'HEX') {
         this.__state.hex = ColorMath.rgb_to_hex(this.r, this.g, this.b);
+        this.__state.space = 'HEX';
       }
       return this.__state.hex;
     },
@@ -4365,6 +4366,7 @@ var webaudioDatabend = (function () {
     }
     var useLocalStorage = SUPPORTS_LOCAL_STORAGE && localStorage.getItem(getLocalStorageHash(this, 'isLocal')) === 'true';
     var saveToLocalStorage = void 0;
+    var titleRow = void 0;
     Object.defineProperties(this,
     {
       parent: {
@@ -4419,8 +4421,8 @@ var webaudioDatabend = (function () {
         },
         set: function set$$1(v) {
           params.name = v;
-          if (titleRowName) {
-            titleRowName.innerHTML = params.name;
+          if (titleRow) {
+            titleRow.innerHTML = params.name;
           }
         }
       },
@@ -4464,7 +4466,7 @@ var webaudioDatabend = (function () {
       }
     });
     if (Common.isUndefined(params.parent)) {
-      params.closed = false;
+      this.closed = params.closed || false;
       dom.addClass(this.domElement, GUI.CLASS_MAIN);
       dom.makeSelectable(this.domElement, false);
       if (SUPPORTS_LOCAL_STORAGE) {
@@ -4493,9 +4495,9 @@ var webaudioDatabend = (function () {
       if (params.closed === undefined) {
         params.closed = true;
       }
-      var _titleRowName = document.createTextNode(params.name);
-      dom.addClass(_titleRowName, 'controller-name');
-      var titleRow = addRow(_this, _titleRowName);
+      var titleRowName = document.createTextNode(params.name);
+      dom.addClass(titleRowName, 'controller-name');
+      titleRow = addRow(_this, titleRowName);
       var onClickTitle = function onClickTitle(e) {
         e.preventDefault();
         _this.closed = !_this.closed;
@@ -4651,6 +4653,12 @@ var webaudioDatabend = (function () {
     },
     close: function close() {
       this.closed = true;
+    },
+    hide: function hide() {
+      this.domElement.style.display = 'none';
+    },
+    show: function show() {
+      this.domElement.style.display = '';
     },
     onResize: function onResize() {
       var root = this.getRoot();
@@ -4842,7 +4850,7 @@ var webaudioDatabend = (function () {
     });
     if (controller instanceof NumberControllerSlider) {
       var box = new NumberControllerBox(controller.object, controller.property, { min: controller.__min, max: controller.__max, step: controller.__step });
-      Common.each(['updateDisplay', 'onChange', 'onFinishChange', 'step'], function (method) {
+      Common.each(['updateDisplay', 'onChange', 'onFinishChange', 'step', 'min', 'max'], function (method) {
         var pc = controller[method];
         var pb = box[method];
         controller[method] = box[method] = function () {
@@ -5156,6 +5164,7 @@ var webaudioDatabend = (function () {
     gui: gui,
     GUI: GUI$1
   };
+  //# sourceMappingURL=dat.gui.module.js.map
 
   var dat_gui_module = /*#__PURE__*/Object.freeze({
     color: color,
@@ -5335,6 +5344,8 @@ var webaudioDatabend = (function () {
   function handleVideoUpload(e, context, databender){
     const reader = new FileReader();
     const video = document.createElement('video');
+    video.height = window.innerHeight;
+    video.width = window.innerWidth;
 
     video.addEventListener('play', function () {
       renderVideoToCanvas(this, context, databender);
@@ -5427,7 +5438,7 @@ var webaudioDatabend = (function () {
     databender.bend(imageData, overlayContext);
   }
 
-  function prepareUpload(context, databender) {
+  function prepareUpload(context, overlayContext) {
     const upload = document.querySelector('.upload');
     const fileUpload = document.querySelector('input[type=file]');
     upload.ondragover = function () { this.classList.add('hover'); return false; };
@@ -5436,18 +5447,18 @@ var webaudioDatabend = (function () {
       e.preventDefault();
       document.querySelector('.upload').style.display = 'none';
       const files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
+      const audioCtx = new AudioContext();
+      const databender = new databender$1(effects$2, audioCtx);
+      loadTrack(audioCtx, databender);
+      handleDatGUI(databender, audioCtx, canvas, context, overlayContext);
       handleFileUpload(files[0], context, databender);
     };
   }
 
   function main () {
-    const audioCtx = new AudioContext();
     const { canvas, context } = prepareCanvas('#canvas');
     const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
-    const databender = new databender$1(effects$2, audioCtx);
-    loadTrack(audioCtx, databender);
-    prepareUpload(context, databender);
-    handleDatGUI(databender, audioCtx, canvas, context, overlayContext);
+    prepareUpload(context, overlayContext);
   }
   main();
 

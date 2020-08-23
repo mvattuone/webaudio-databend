@@ -167,6 +167,8 @@ function handleImageUpload (e, context, databender) {
 function handleVideoUpload(e, context, databender){
   const reader = new FileReader();
   const video = document.createElement('video');
+  video.height = window.innerHeight;
+  video.width = window.innerWidth;
 
   video.addEventListener('play', function () {
     renderVideoToCanvas(this, context, databender);
@@ -262,7 +264,7 @@ function handleFill(context, overlayContext, databender) {
   databender.bend(imageData, overlayContext);
 }
 
-function prepareUpload(context, databender) {
+function prepareUpload(context, overlayContext) {
   const upload = document.querySelector('.upload');
   const fileUpload = document.querySelector('input[type=file]');
   upload.ondragover = function () { this.classList.add('hover'); return false; };
@@ -271,18 +273,18 @@ function prepareUpload(context, databender) {
     e.preventDefault();
     document.querySelector('.upload').style.display = 'none';
     const files = e.target.files || (e.dataTransfer && e.dataTransfer.files);
+    const audioCtx = new AudioContext();
+    const databender = new Databender(effects, audioCtx);
+    loadTrack(audioCtx, databender);
+    handleDatGUI(databender, audioCtx, canvas, context, overlayContext);
     handleFileUpload(files[0], context, databender);
   }
 }
 
 function main () {
-  const audioCtx = new AudioContext();
   const { canvas, context } = prepareCanvas('#canvas');
   const { canvas: overlayCanvas, context: overlayContext } = prepareCanvas('#overlay');
-  const databender = new Databender(effects, audioCtx);
-  loadTrack(audioCtx, databender);
-  prepareUpload(context, databender);
-  handleDatGUI(databender, audioCtx, canvas, context, overlayContext);
+  prepareUpload(context, overlayContext);
 };
 
 main();

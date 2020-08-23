@@ -1,6 +1,6 @@
 const options = {
   playAudio: false,
-  frameRate: 30
+  frameRate: 10
 }
 
 const tools = {
@@ -45,8 +45,8 @@ const effects = {
     randomize: false,
     quality: 1,
     randomValues: 2,
-    type: "highpass",
-    biquadFrequency: 4000
+    type: "lowpass",
+    biquadFrequency: 8500
   },
   gain: {
     active: false,

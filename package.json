@@ -19,8 +19,8 @@
   },
   "homepage": "https://github.com/mvattuone/webaudio-databend#readme",
   "dependencies": {
-    "dat.gui": "0.7.1",
-    "databender": "1.0.3"
+    "dat.gui": "0.7.7",
+    "databender": "1.0.4"
   },
   "devDependencies": {
     "rollup": "^0.58.2",
